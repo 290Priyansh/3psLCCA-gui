@@ -18,8 +18,9 @@ import traceback
 
 from .base_table import StructureTableWidget
 from .material_dialog import MaterialDialog
+from ...utils.definitions import UNIT_DISPLAY
 from ...utils.validation_helpers import freeze_widgets
-from ...utils.display_format import fmt_comma
+from ...utils.display_format import fmt, fmt_comma
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +212,19 @@ class StructureManagerWidget(QWidget):
             chunk_name=self.chunk_name, data=current_data
         )
         self.save_current_state()
-        self.on_refresh()
+
+        if is_trash:
+            self.on_refresh()
+            return
+
+        original_index = len(current_data[comp_name]) - 1
+        self.data = current_data
+        table = getattr(self, "sections", {}).get(comp_name)
+        if table:
+            table.insert_row_at_position(new_entry, original_index)
+            self._update_summary()
+        else:
+            self.on_refresh()
 
     def _get_project_country(self) -> str:
         try:
@@ -318,7 +331,48 @@ class StructureManagerWidget(QWidget):
                         chunk_name=self.chunk_name, data=current_data
                     )
                     self.save_current_state()
-                    QTimer.singleShot(0, self.on_refresh)
+
+                    def _do_edit():
+                        self.data = current_data
+                        table = getattr(self, "sections", {}).get(comp_name)
+                        if table and table_row_index < table.rowCount():
+                            v = new_values
+                            # Surgical update of cells 0-5
+                            cells_updated = 0
+                            for col, text in [
+                                (0, v.get("material_name", "New Item")),
+                                (1, fmt_comma(v.get("rate", 0))),
+                                (2, fmt(v.get("quantity", 0))),
+                                (3, UNIT_DISPLAY.get(v.get("unit", "").lower(), v.get("unit", ""))),
+                                (4, v.get("rate_source", "Manual")),
+                            ]:
+                                it = table.item(table_row_index, col)
+                                if it:
+                                    it.setText(text)
+                                    cells_updated += 1
+
+                            try:
+                                rate = float(v.get("rate", 0) or 0)
+                                qty = float(v.get("quantity", 0) or 0)
+                                total = rate * qty
+                            except (ValueError, TypeError):
+                                total = 0.0
+
+                            it_total = table.item(table_row_index, 5)
+                            if it_total:
+                                it_total.setText(fmt_comma(total))
+                                cells_updated += 1
+
+                            # If cells are missing (None), fallback to full refresh for this table
+                            if cells_updated < 6:
+                                self.on_refresh()
+                            else:
+                                table.update_height()
+                                self._update_summary()
+                        else:
+                            self.on_refresh()
+
+                    QTimer.singleShot(0, _do_edit)
         except Exception as e:
 
             print(f"[ERROR] open_edit_dialog crashed: {e}")
