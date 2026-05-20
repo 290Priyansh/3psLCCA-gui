@@ -1,4 +1,4 @@
-
+﻿
 from pylatex import Section, Subsection, Tabular, NoEscape
 from pylatex.utils import bold, escape_latex
 from ..constants import (
@@ -106,8 +106,8 @@ def add_input_data(doc, config, data):
                 construction = data.get(KEY_CONSTRUCTION, {})
                 cat_table_captions = {
                     "Foundation":     "Construction material quantities and rates for foundation",
-                    "Sub Structure":  "Construction material quantities and rates for substructure",
-                    "Super Structure":"Construction material quantities and rates for superstructure",
+                    "Sub-Structure":  "Construction material quantities and rates for substructure",
+                    "Super-Structure":"Construction material quantities and rates for superstructure",
                     "Miscellaneous":  "Construction material quantities and rates for miscellaneous activities",
                 }
                 header_row = (

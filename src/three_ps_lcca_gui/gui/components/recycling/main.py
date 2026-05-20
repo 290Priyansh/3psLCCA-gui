@@ -1,4 +1,4 @@
-from three_ps_lcca_gui.gui.themes import get_token
+﻿from three_ps_lcca_gui.gui.themes import get_token
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -34,8 +34,8 @@ from ..utils.table_widgets import (
 
 CHUNKS = [
     ("str_foundation", "Foundation"),
-    ("str_sub_structure", "Sub Structure"),
-    ("str_super_structure", "Super Structure"),
+    ("str_sub_structure", "Sub-Structure"),
+    ("str_super_structure", "Super-Structure"),
     ("str_misc", "Misc"),
 ]
 
@@ -440,8 +440,8 @@ class Recycling(QWidget):
         details_layout.setContentsMargins(8, 0, 8, 8)
 
         self.foundation_lbl = QLabel("Foundation: -")
-        self.sub_lbl = QLabel("Sub Structure: -")
-        self.super_lbl = QLabel("Super Structure: -")
+        self.sub_lbl = QLabel("Sub-Structure: -")
+        self.super_lbl = QLabel("Super-Structure: -")
         self.misc_lbl = QLabel("Misc: -")
 
         for lbl in [self.foundation_lbl, self.sub_lbl, self.super_lbl, self.misc_lbl]:
@@ -675,10 +675,10 @@ class Recycling(QWidget):
             f"Foundation: {currency} {fmt_comma(cat_totals.get('Foundation', 0))}".strip()
         )
         self.sub_lbl.setText(
-            f"Sub Structure: {currency} {fmt_comma(cat_totals.get('Sub Structure', 0))}".strip()
+            f"Sub-Structure: {currency} {fmt_comma(cat_totals.get('Sub-Structure', 0))}".strip()
         )
         self.super_lbl.setText(
-            f"Super Structure: {currency} {fmt_comma(cat_totals.get('Super Structure', 0))}".strip()
+            f"Super-Structure: {currency} {fmt_comma(cat_totals.get('Super-Structure', 0))}".strip()
         )
         self.misc_lbl.setText(
             f"Misc: {currency} {fmt_comma(cat_totals.get('Misc', 0))}".strip()
@@ -800,7 +800,7 @@ class Recycling(QWidget):
 
         if result["total_count"] == 0:
             warnings.append(
-                "No materials found - add items in the Construction Work Data section."
+                "No materials found - add items in the Construction Works Data section."
             )
         elif result["total_recovered_value"] == 0.0:
             warnings.append(

@@ -12,6 +12,7 @@ SafeChunkEngine.APP_AUTHOR = APP_AUTHOR
 
 from PySide6.QtWidgets import (
     QApplication,
+    QLabel,
     QSpinBox,
     QDoubleSpinBox,
     QComboBox,
@@ -76,6 +77,15 @@ class _TableRowSelectFilter(QObject):
             obj.setSelectionMode(QTableView.SingleSelection)
             obj.setSelectionBehavior(QTableView.SelectRows)
             obj.setMouseTracking(True)
+        return super().eventFilter(obj, event)
+
+
+class _LabelWordWrapFilter(QObject):
+    """Enables word wrap on every QLabel when it is polished."""
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Polish and isinstance(obj, QLabel):
+            obj.setWordWrap(True)
         return super().eventFilter(obj, event)
 
 
@@ -183,9 +193,11 @@ def main():
     wheel_filter = DisableSpinBoxScroll()
     table_filter = _TableRowSelectFilter()
     focus_filter = SelectTextOnFocus()
+    label_wrap_filter = _LabelWordWrapFilter()
     app.installEventFilter(wheel_filter)
     app.installEventFilter(table_filter)
     app.installEventFilter(focus_filter)
+    app.installEventFilter(label_wrap_filter)
 
     # Runtime Theme Switching (Qt 6.5+)
     try:

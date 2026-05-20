@@ -1,4 +1,4 @@
-"""
+﻿"""
 gui/components/outputs/data_preparer.py
 Helper class to map raw UI data dictionaries to Core LCCA objects.
 """
@@ -59,7 +59,7 @@ class DataPreparer:
 
         construction_work_data = data.get("construction_work_data")
         grand_total = float(construction_work_data.get("grand_total"))
-        super_total = float(construction_work_data.get("Super Structure").get("total"))
+        super_total = float(construction_work_data.get("Super-Structure").get("total"))
         scrap_value = float(data.get("recycling_data").get("total_recovered_value"))
 
         return {

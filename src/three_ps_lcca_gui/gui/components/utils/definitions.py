@@ -1,4 +1,4 @@
-# ---------------------------------------------------------------------------
+﻿# ---------------------------------------------------------------------------
 # utils/definitions.py
 # ---------------------------------------------------------------------------
 # Unit data is loaded from units.json at import time.
@@ -132,8 +132,8 @@ def set_active_unit_system(system: str) -> None:
 
 STRUCTURE_CHUNKS = [
     ("str_foundation", "Foundation"),
-    ("str_sub_structure", "Sub Structure"),
-    ("str_super_structure", "Super Structure"),
+    ("str_sub_structure", "Sub-Structure"),
+    ("str_super_structure", "Super-Structure"),
     ("str_misc", "Misc"),
 ]
 

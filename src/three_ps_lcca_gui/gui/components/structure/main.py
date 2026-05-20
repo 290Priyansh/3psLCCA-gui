@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (
+﻿from PySide6.QtWidgets import (
     QTabWidget,
     QWidget,
     QVBoxLayout,
@@ -23,8 +23,8 @@ from .widgets.trash_tab import TrashTabWidget
 
 _PAGES = [
     ("Foundation", "str_foundation"),
-    ("Sub Structure", "str_sub_structure"),
-    ("Super Structure", "str_super_structure"),
+    ("Sub-Structure", "str_sub_structure"),
+    ("Super-Structure", "str_super_structure"),
     ("Miscellaneous", "str_misc"),
 ]
 
@@ -102,8 +102,8 @@ class StructureTabView(QWidget):
         self.misc_tab = MiscWidget(controller=controller)
 
         self.tab_view.addTab(self.foundation_tab, "Foundation")
-        self.tab_view.addTab(self.substructure_tab, "Sub Structure")
-        self.tab_view.addTab(self.superstructure_tab, "Super Structure")
+        self.tab_view.addTab(self.substructure_tab, "Sub-Structure")
+        self.tab_view.addTab(self.superstructure_tab, "Super-Structure")
         self.tab_view.addTab(self.misc_tab, "Miscellaneous")
 
         # 2. Trash View
@@ -403,8 +403,8 @@ class StructureTabView(QWidget):
         """External helper to switch tabs (e.g., from a Sidebar)."""
         mapping = {
             "Foundation": 0,
-            "Sub Structure": 1,
-            "Super Structure": 2,
+            "Sub-Structure": 1,
+            "Super-Structure": 2,
             "Miscellaneous": 3,
         }
         idx = mapping.get(name)

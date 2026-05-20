@@ -1,4 +1,4 @@
-"""
+﻿"""
 search_engine.py
 ================
 Loads material databases from the catalog (material_catalog.json) and
@@ -208,7 +208,7 @@ class MaterialSearchEngine:
 
         Parameters
         ----------
-        category : str   e.g. "Foundation", "Super Structure"
+        category : str   e.g. "Foundation", "Super-Structure"
         mat_type : str   e.g. "Pile", "Girder"  (optional)
         db_key   : str   restrict to one database (optional)
         """

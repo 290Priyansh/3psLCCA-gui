@@ -22,8 +22,8 @@ from .utils.countries_data import CURRENCIES, COUNTRIES, COUNTRY_TO_CURRENCY
 
 
 _UNIT_SYSTEMS = [
-    ("Metric (SI)",          "metric"),
-    ("Imperial (English)",   "imperial"),
+    ("Metric",          "metric"),
+    ("Imperial",   "imperial"),
 ]
 
 

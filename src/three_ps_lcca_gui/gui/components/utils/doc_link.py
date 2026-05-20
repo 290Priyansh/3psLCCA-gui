@@ -68,7 +68,7 @@ def doc_label(html: str, word_wrap: bool = True) -> QLabel:
     QLabel
         Ready to add to any layout.
     """
-    label = QLabel(html)
+    label = QLabel(f'<p style="margin:0;padding:0;">{html}</p>')
     label.setTextFormat(Qt.RichText)
     label.setWordWrap(word_wrap)
     label.setOpenExternalLinks(False)

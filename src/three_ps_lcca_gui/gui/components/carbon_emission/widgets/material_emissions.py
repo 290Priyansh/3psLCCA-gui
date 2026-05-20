@@ -1,4 +1,4 @@
-from three_ps_lcca_gui.gui.themes import get_token
+﻿from three_ps_lcca_gui.gui.themes import get_token
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -59,8 +59,8 @@ def _cached_analysis(unit: str, carbon_denom: str, conv_factor) -> dict:
 
 CHUNKS = [
     ("str_foundation", "Foundation"),
-    ("str_sub_structure", "Sub Structure"),
-    ("str_super_structure", "Super Structure"),
+    ("str_sub_structure", "Sub-Structure"),
+    ("str_super_structure", "Super-Structure"),
     ("str_misc", "Misc"),
 ]
 
@@ -514,8 +514,8 @@ class MaterialEmissions(QWidget):
         self.details_widget = QWidget()
         details_layout = QHBoxLayout(self.details_widget)
         self.foundation_lbl = QLabel("Foundation: -")
-        self.sub_lbl = QLabel("Sub Structure: -")
-        self.super_lbl = QLabel("Super Structure: -")
+        self.sub_lbl = QLabel("Sub-Structure: -")
+        self.super_lbl = QLabel("Super-Structure: -")
         self.misc_lbl = QLabel("Misc: -")
         for lbl in [self.foundation_lbl, self.sub_lbl, self.super_lbl, self.misc_lbl]:
             details_layout.addWidget(lbl)
@@ -768,10 +768,10 @@ class MaterialEmissions(QWidget):
             f"Foundation: {fmt_comma(cat_totals.get('Foundation', 0))}"
         )
         self.sub_lbl.setText(
-            f"Sub Structure: {fmt_comma(cat_totals.get('Sub Structure', 0))}"
+            f"Sub-Structure: {fmt_comma(cat_totals.get('Sub-Structure', 0))}"
         )
         self.super_lbl.setText(
-            f"Super Structure: {fmt_comma(cat_totals.get('Super Structure', 0))}"
+            f"Super-Structure: {fmt_comma(cat_totals.get('Super-Structure', 0))}"
         )
         self.misc_lbl.setText(f"Misc: {fmt_comma(cat_totals.get('Misc', 0))}")
 
@@ -1013,7 +1013,7 @@ class MaterialEmissions(QWidget):
 
         if result["total_count"] == 0:
             warnings.append(
-                "No materials found - add items in the Construction Work Data section."
+                "No materials found - add items in the Construction Works Data section."
             )
         elif result["total_carbon"] == 0.0:
             warnings.append(

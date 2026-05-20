@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QTextEdit,
     QVBoxLayout,
@@ -246,7 +247,11 @@ def build_form(
         layout.setSpacing(4)
 
         # Title
-        title_label = QLabel(f"{f.title} *" if f.required else f.title)
+        if f.required:
+            title_label = QLabel(f'{f.title} <span style="color:{get_token("danger")};">*</span>')
+            title_label.setTextFormat(Qt.RichText)
+        else:
+            title_label = QLabel(f.title)
         title_label.setStyleSheet(f"font-weight: {get_token('weight-semibold')};")
         layout.addWidget(title_label)
 
@@ -264,8 +269,8 @@ def build_form(
         # ── textarea ──────────────────────────────────────────────────────
         elif f.field_type == "textarea":
             widget = QTextEdit()
-            widget.setMinimumHeight(80)
-            widget.setMaximumHeight(120)
+            widget.setFixedHeight(100)
+            widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             setattr(host, f.key, host.field(f.key, widget))
 
         # ── int ───────────────────────────────────────────────────────────

@@ -1090,6 +1090,7 @@ class HomePage(QWidget):
 
         self.greeting_lbl = QLabel()
         self.greeting_lbl.setTextFormat(Qt.RichText)
+        self.greeting_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self._update_greeting()
 
         self._greet_timer = QTimer(self)
@@ -1345,7 +1346,7 @@ class HomePage(QWidget):
                          "ConstructSteel_dark.svg"),
             os.path.join(_ASSETS_DIR, "logo", "special",
                          "ConstructSteel_light.svg"),
-            20, is_dk
+            12, is_dk
         )
         self._set_themed_logo(
             self.mos_logo,
@@ -1588,7 +1589,7 @@ class HomePage(QWidget):
                     show_cta = False
                 else:
                     head = None  # Triggers Logo display in _EmptyState
-                    sub = "Start your first bridge life-cycle cost analysis by creating a new project."
+                    sub = "Start your bridge life-cycle cost analysis by creating a new project."
                     show_cta = True
 
             empty = _EmptyState(

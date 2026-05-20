@@ -1,4 +1,4 @@
-"""
+﻿"""
 excel_importer.py
 =================
 Excel → Material import pipeline.
@@ -146,9 +146,9 @@ NUMERIC_FIELDS = {
 # Unrecognised sheets fall back to str_misc with the sheet name as component.
 SHEET_TO_CHUNK: dict[str, str] = {
     "foundation": "str_foundation",
-    "sub structure": "str_sub_structure",
+    "Sub-Structure": "str_sub_structure",
     "substructure": "str_sub_structure",
-    "super structure": "str_super_structure",
+    "Super-Structure": "str_super_structure",
     "superstructure": "str_super_structure",
     "misc": "str_misc",
     "miscellaneous": "str_misc",

@@ -1,4 +1,4 @@
-import math
+﻿import math
 import datetime
 import time
 from three_ps_lcca_gui.gui.themes import get_token
@@ -435,8 +435,8 @@ class TransportEmissions(QWidget):
         details_layout.setContentsMargins(8, 0, 8, 8)
 
         self.foundation_lbl = QLabel("Foundation: -")
-        self.sub_lbl = QLabel("Sub Structure: -")
-        self.super_lbl = QLabel("Super Structure: -")
+        self.sub_lbl = QLabel("Sub-Structure: -")
+        self.super_lbl = QLabel("Super-Structure: -")
         self.misc_lbl = QLabel("Misc: -")
 
         for lbl in [self.foundation_lbl, self.sub_lbl, self.super_lbl, self.misc_lbl]:
@@ -538,10 +538,10 @@ class TransportEmissions(QWidget):
             f"Foundation: {fmt_comma(cat_totals.get('Foundation', 0))}"
         )
         self.sub_lbl.setText(
-            f"Sub Structure: {fmt_comma(cat_totals.get('Sub Structure', 0))}"
+            f"Sub-Structure: {fmt_comma(cat_totals.get('Sub-Structure', 0))}"
         )
         self.super_lbl.setText(
-            f"Super Structure: {fmt_comma(cat_totals.get('Super Structure', 0))}"
+            f"Super-Structure: {fmt_comma(cat_totals.get('Super-Structure', 0))}"
         )
         self.misc_lbl.setText(f"Misc: {fmt_comma(cat_totals.get('Misc', 0))}")
 
@@ -708,7 +708,7 @@ class TransportEmissions(QWidget):
 
         if result["active_count"] == 0:
             warnings.append(
-                "No active vehicle entries - add a vehicle in the Transportation Emissions tab."
+                "No active vehicle entries - add a vehicle in the Transportation/Equipment Emissions tab."
             )
         elif result["total_emission"] == 0.0:
             warnings.append(

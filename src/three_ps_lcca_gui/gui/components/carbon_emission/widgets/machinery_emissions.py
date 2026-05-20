@@ -802,7 +802,7 @@ class MachineryEmissions(ScrollableForm):
         banner = QGroupBox()
         banner_layout = QHBoxLayout(banner)
         banner_layout.setContentsMargins(12, 8, 12, 8)
-        self._lbl_grand_total = QLabel("Total Machinery Emissions: - kg CO₂e")
+        self._lbl_grand_total = QLabel("Total Machinery/Equipment Emissions: - kg CO₂e")
         self._lbl_grand_total.setFont(bold)
         note = QLabel(
             "  ⓘ  Fill either Detailed Equipment List or Lump Sum - not both."
@@ -918,7 +918,7 @@ class MachineryEmissions(ScrollableForm):
         bottom_banner = QGroupBox()
         bottom_layout = QHBoxLayout(bottom_banner)
         bottom_layout.setContentsMargins(12, 8, 12, 8)
-        self._lbl_grand_total_bottom = QLabel("Total Machinery Emissions: - kg CO₂e")
+        self._lbl_grand_total_bottom = QLabel("Total Machinery/Equipment Emissions: - kg CO₂e")
         self._lbl_grand_total_bottom.setFont(bold)
         bottom_layout.addStretch()
         bottom_layout.addWidget(self._lbl_grand_total_bottom)
@@ -990,7 +990,7 @@ class MachineryEmissions(ScrollableForm):
             total = self._lumpsum_elec_total() + self._lumpsum_fuel_total()
             self._lbl_lumpsum_total.setText(f"Lump Sum Subtotal: {fmt_comma(total)} kg CO₂e")
 
-        text = f"Total Machinery Emissions: {fmt_comma(total)} kg CO₂e"
+        text = f"Total Machinery/Equipment Emissions: {fmt_comma(total)} kg CO₂e"
         self._lbl_grand_total.setText(text)
         self._lbl_grand_total_bottom.setText(text)
         self._on_field_changed()

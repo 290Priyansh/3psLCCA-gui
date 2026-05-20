@@ -38,10 +38,10 @@ class CarbonEmissionTabView(QWidget):
             TransportEmissions(controller=controller), "Transportation Emissions"
         )
         self.tab_view.addTab(
-            MachineryEmissions(controller=controller), "Machinery Emissions"
+            MachineryEmissions(controller=controller), "Machinery/Equipment Emissions"
         )
         self.tab_view.addTab(
-            TrafficEmissions(controller=controller), "Traffic Diversion Emissions"
+            TrafficEmissions(controller=controller), "Traffic Rerouting Emissions"
         )
         self.tab_view.addTab(SocialCost(controller=controller), "Social Cost of Carbon")
 
@@ -91,8 +91,8 @@ class CarbonEmissionTabView(QWidget):
         tabs = [
             "Material Emissions",
             "Transportation Emissions",
-            "Machinery Emissions",
-            "Traffic Diversion Emissions",
+            "Machinery/Equipment Emissions",
+            "Traffic Rerouting Emissions",
             "Social Cost of Carbon",
         ]
         if name in tabs:

@@ -1,4 +1,4 @@
-"""
+﻿"""
 material_catalog.py
 ===================
 Auto-discovers every material database JSON file under a configurable
@@ -265,7 +265,7 @@ def build_registry(root: str = MATERIAL_DB_ROOT,
           "region":   "Maharashtra",
           "status":   "OK" | "FAILED",
           "record_count": 15,
-          "sheets":   ["Foundation", "Sub Structure", ...],   ← category list
+          "sheets":   ["Foundation", "Sub-Structure", ...],   ← category list
           "types":    ["Excavation", "Pile", ...],            ← type list
           "errors":   [],
           "warnings": [...],

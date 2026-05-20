@@ -1,4 +1,4 @@
-import os
+﻿import os
 
 from PySide6.QtCore import Qt, QRect, QSize, QEvent, QPoint, QTimer, QStandardPaths
 from PySide6.QtWidgets import (
@@ -68,19 +68,19 @@ SIDEBAR_TREE = {
     "General Information": {},
     "Bridge Data": {},
     "Input Parameters": {
-        "Construction Work Data": [
+        "Construction Works Data": [
             "Foundation",
-            "Sub Structure",
-            "Super Structure",
+            "Sub-Structure",
+            "Super-Structure",
             "Miscellaneous",
         ],
         "Traffic Data": [],
         "Financial Data": [],
-        "Carbon Emission Data": [
+        "Carbon Emissions Data": [
             "Material Emissions",
             "Transportation Emissions",
-            "Machinery Emissions",
-            "Traffic Diversion Emissions",
+            "Machinery/Equipment Emissions",
+            "Traffic Rerouting Emissions",
             "Social Cost of Carbon",
         ],
         "Maintenance and Repair": [],
@@ -104,10 +104,10 @@ _SIDEBAR_ICONS: dict[str, str] = {
     "General Information":    "info",
     "Bridge Data":            "layers",
     "Input Parameters":       "folder",
-    "Construction Work Data": "build",
+    "Construction Works Data": "build",
     "Traffic Data":           "truck",
     "Financial Data":         "cash",
-    "Carbon Emission Data":   "cloud",
+    "Carbon Emissions Data":   "cloud",
     "Maintenance and Repair": "settings",
     "Recycling":              "autorenew",
     "Demolition":             "delete",
@@ -468,8 +468,8 @@ class ProjectWindow(QMainWindow):
 
         self.menubar.addAction(home_action)
         self.menubar.addMenu(self.menuFile)
-        self.menubar.addMenu(self.menuHelp)
         self.menubar.addAction(self.log_action)
+        self.menubar.addMenu(self.menuHelp)
 
         top_bar_layout.addWidget(
             self.menubar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -552,8 +552,8 @@ class ProjectWindow(QMainWindow):
         # Page widgets are built lazily on first sidebar click via _get_or_create_widget
         self.widget_map = {"Outputs": self.outputs_page}
         self._page_names = [
-            "General Information", "Bridge Data", "Construction Work Data",
-            "Traffic Data", "Financial Data", "Carbon Emission Data",
+            "General Information", "Bridge Data", "Construction Works Data",
+            "Traffic Data", "Financial Data", "Carbon Emissions Data",
             "Maintenance and Repair", "Recycling", "Demolition",
         ]
 
@@ -586,13 +586,13 @@ class ProjectWindow(QMainWindow):
             widget = GeneralInfo(controller=self.controller)
         elif name == "Bridge Data":
             widget = BridgeData(controller=self.controller)
-        elif name == "Construction Work Data":
+        elif name == "Construction Works Data":
             widget = StructureTabView(controller=self.controller)
         elif name == "Traffic Data":
             widget = TrafficData(controller=self.controller)
         elif name == "Financial Data":
             widget = FinancialData(controller=self.controller)
-        elif name == "Carbon Emission Data":
+        elif name == "Carbon Emissions Data":
             widget = CarbonEmissionTabView(controller=self.controller)
         elif name == "Maintenance and Repair":
             widget = Maintenance(controller=self.controller)
@@ -606,9 +606,9 @@ class ProjectWindow(QMainWindow):
         self.widget_map[name] = widget
         self.content_stack.addWidget(widget)
 
-        if name == "Construction Work Data":
+        if name == "Construction Works Data":
             widget.tab_changed.connect(self._sync_sidebar_from_tab)
-        elif name == "Carbon Emission Data":
+        elif name == "Carbon Emissions Data":
             widget.tab_changed.connect(self._sync_sidebar_from_tab)
 
         if self._frozen and hasattr(widget, "freeze"):
@@ -623,7 +623,7 @@ class ProjectWindow(QMainWindow):
         # Direct page item - show it
         widget = self._get_or_create_widget(header)
         if widget:
-            # If we are navigating AWAY from Construction Work Data or TO it directly,
+            # If we are navigating AWAY from Construction Works Data or TO it directly,
             # ensure Trash view is reset.
             for w in self.widget_map.values():
                 if isinstance(w, StructureTabView):
@@ -708,7 +708,7 @@ class ProjectWindow(QMainWindow):
             self._project_ui_ready = True
         _order = [
             "General Information",
-            "Construction Work Data", "Carbon Emission Data",
+            "Construction Works Data", "Carbon Emissions Data",
             "Bridge Data", "Traffic Data", "Financial Data",
             "Maintenance and Repair", "Recycling", "Demolition",
         ]
