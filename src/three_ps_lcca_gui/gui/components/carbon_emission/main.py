@@ -31,6 +31,7 @@ class CarbonEmissionTabView(QWidget):
         palette.setColor(QPalette.Base, palette.color(QPalette.Window))
         self.tab_view.setPalette(palette)
 
+        self.tab_view.addTab(SocialCost(controller=controller), "Social Cost of Carbon")
         self.tab_view.addTab(
             MaterialEmissions(controller=controller), "Material Emissions"
         )
@@ -43,7 +44,6 @@ class CarbonEmissionTabView(QWidget):
         self.tab_view.addTab(
             TrafficEmissions(controller=controller), "Traffic Rerouting Emissions"
         )
-        self.tab_view.addTab(SocialCost(controller=controller), "Social Cost of Carbon")
 
         main_layout.addWidget(self.tab_view)
         self.tab_view.currentChanged.connect(self._on_tab_changed)
@@ -89,11 +89,11 @@ class CarbonEmissionTabView(QWidget):
 
     def select_tab(self, name):
         tabs = [
+            "Social Cost of Carbon",
             "Material Emissions",
             "Transportation Emissions",
             "Machinery/Equipment Emissions",
             "Traffic Rerouting Emissions",
-            "Social Cost of Carbon",
         ]
         if name in tabs:
             self.tab_view.setCurrentIndex(tabs.index(name))

@@ -24,11 +24,9 @@ from ..utils.validation_helpers import (
     validate_form,
     confirm_clear_all,
 )
-from ..utils.countries_data import CURRENCIES, COUNTRIES
+from ..utils.countries_data import CURRENCIES
 from ..utils.display_format import DECIMAL_PLACES
 from three_ps_lcca_gui.gui.themes import get_token
-
-
 
 
 BRIDGE_FIELDS = [
@@ -51,27 +49,32 @@ BRIDGE_FIELDS = [
     FieldDef(
         "project_country",
         "Country",
-        "Country in which the bridge is situated.",
+        "Country in which the bridge is situated. Set at project creation.",
         "text",
-        options=COUNTRIES,
-        required=True
+        blocked=True,
     ),
+    # FieldDef(
+    #     "location_from",
+    #     "From",
+    #     "Starting point of the bridge (city, road name, landmark, or coordinates).",
+    #     "text"
+    # ),
+    # FieldDef(
+    #     "location_via",
+    #     "Via",
+    #     "Intermediate feature crossed by the bridge (e.g., river, valley, railway, highway).",
+    #     "text"
+    # ),
+    # FieldDef(
+    #     "location_to",
+    #     "To",
+    #     "Ending point of the bridge (city, road name, landmark, or coordinates).",
+    #     "text"
+    # ),
     FieldDef(
-        "location_from",
-        "From",
-        "Starting point of the bridge (city, road name, landmark, or coordinates).",
-        "text"
-    ),
-    FieldDef(
-        "location_via",
-        "Via",
-        "Intermediate feature crossed by the bridge (e.g., river, valley, railway, highway).",
-        "text"
-    ),
-    FieldDef(
-        "location_to",
-        "To",
-        "Ending point of the bridge (city, road name, landmark, or coordinates).",
+        "location",
+        "Bridge Alignment & Location",
+        "Bridge start point, end point, crossed feature (river, valley, railway, highway), and nearby landmarks or route details.",
         "text"
     ),
     # ── Technical Specifications ─────────────────────────────────────────
@@ -237,7 +240,8 @@ class BridgeData(ScrollableForm):
 
         # location_country is set at project creation - lock it
 
-        self.required_keys = [k for k in self.required_keys if k not in self._LOCKED]
+        self.required_keys = [
+            k for k in self.required_keys if k not in self._LOCKED]
         for key in self._LOCKED:
             w = getattr(self, key, None)
             if w is not None:
@@ -333,5 +337,3 @@ class BridgeData(ScrollableForm):
 
     def get_data(self) -> dict:
         return {"chunk": "bridge_data", "data": self.get_data_dict()}
-
-

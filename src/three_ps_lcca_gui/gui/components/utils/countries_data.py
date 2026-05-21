@@ -1654,18 +1654,28 @@ data = [
 ]
 
 COUNTRIES = sorted(
-    set(item["COUNTRY"] for item in data), key=lambda x: (x != "INDIA", x)
+    set(item["COUNTRY"].title() for item in data),
+    key=lambda x: (x != "India", x)
 )
 
 CURRENCIES = sorted(
-    set(item["CURRENCY_CODE"] for item in data), key=lambda x: (x != "INR", x)
+    set(item["CURRENCY_CODE"] for item in data),
+    key=lambda x: (x != "INR", x)
 )
 
-# FOLDER_NAME → full entry  (e.g. FOLDER_MAP["UNITED_STATES"]["COUNTRY"] == "UNITED STATES")
-FOLDER_MAP = {item["FOLDER_NAME"]: item for item in data}
+# FOLDER_NAME → full entry with sentence-cased country
+FOLDER_MAP = {
+    item["FOLDER_NAME"]: {
+        **item,
+        "COUNTRY": item["COUNTRY"].title()
+    }
+    for item in data
+}
 
-
-# Add this new mapping: COUNTRY -> CURRENCY_CODE
-COUNTRY_TO_CURRENCY = {item["COUNTRY"]: item["CURRENCY_CODE"] for item in data}
+# COUNTRY -> CURRENCY_CODE with sentence-cased country keys
+COUNTRY_TO_CURRENCY = {
+    item["COUNTRY"].title(): item["CURRENCY_CODE"]
+    for item in data
+}
 
 

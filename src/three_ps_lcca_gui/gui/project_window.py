@@ -77,11 +77,11 @@ SIDEBAR_TREE = {
         "Traffic Data": [],
         "Financial Data": [],
         "Carbon Emissions Data": [
+            "Social Cost of Carbon",
             "Material Emissions",
             "Transportation Emissions",
             "Machinery/Equipment Emissions",
             "Traffic Rerouting Emissions",
-            "Social Cost of Carbon",
         ],
         "Maintenance and Repair": [],
         "Recycling": [],

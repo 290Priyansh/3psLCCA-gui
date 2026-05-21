@@ -125,6 +125,13 @@ REVIEWER_FIELDS = [
         "text",
     ),
     FieldDef(
+        "agency_country",
+        "Country",
+        "Country where the reviewing agency is located.",
+        "combo",
+        options=COUNTRIES,
+    ),
+    FieldDef(
         "reviewer_email",
         "Email",
         "",
