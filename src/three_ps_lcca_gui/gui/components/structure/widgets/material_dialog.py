@@ -826,7 +826,7 @@ class MaterialDialog(QDialog):
             sub_row = QHBoxLayout()
             sub_row.setContentsMargins(0, 0, 0, 0)
             sub_row.setSpacing(8)
-            sub_lbl = QLabel("Sub-category:")
+            sub_lbl = QLabel("Category:")
             sub_lbl.setStyleSheet(f"font-size: 11px; color: {get_token('text_secondary')};")
             sub_row.addWidget(sub_lbl)
             self.type_filter_cb = QComboBox()
@@ -843,7 +843,7 @@ class MaterialDialog(QDialog):
         root.addWidget(_lbl("Material Name *", "material_name"))
         self.name_in = QLineEdit(v.get("material_name", ""))
         self.name_in.setPlaceholderText(
-            "e.g. Ready-mix Concrete M25  (type ? to browse all)"
+            "e.g. Ready-mix Concrete M25  (Type ? to browse all)"
         )
         self.name_in.setMinimumHeight(32)
         root.addWidget(self.name_in)
@@ -907,7 +907,7 @@ class MaterialDialog(QDialog):
 
         rate_col = QVBoxLayout()
         rate_col.setSpacing(3)
-        rate_col.addWidget(_lbl("Rate (Cost)", "rate"))
+        rate_col.addWidget(_lbl("Rate (Unit Cost)", "rate"))
         rate_val = v.get("rate", "")
         self.rate_in = QLineEdit("" if not rate_val else str(rate_val))
         self.rate_in.setPlaceholderText("e.g. 4500")
@@ -938,7 +938,7 @@ class MaterialDialog(QDialog):
         root.addWidget(_divider())
 
         carbon_hdr = QHBoxLayout()
-        carbon_title = QLabel("Carbon Emission")
+        carbon_title = QLabel("Carbon Emission Factor")
         carbon_title.setStyleSheet("font-weight: 600; font-size: 12px;")
         carbon_hdr.addWidget(carbon_title)
         carbon_hdr.addStretch()
@@ -990,7 +990,7 @@ class MaterialDialog(QDialog):
 
         src_col = QVBoxLayout()
         src_col.setSpacing(3)
-        src_col.addWidget(_lbl("Emission Factor Source", "carbon_emission_src"))
+        src_col.addWidget(_lbl("Source", "carbon_emission_src"))
         self._original_carbon_src = v.get("carbon_emission_src", "")
         self.carbon_src_in = QLineEdit(self._original_carbon_src)
         self.carbon_src_in.setPlaceholderText("e.g. ICE v3.0, IPCC")
@@ -1064,7 +1064,7 @@ class MaterialDialog(QDialog):
 
         scrap_col = QVBoxLayout()
         scrap_col.setSpacing(3)
-        scrap_col.addWidget(_lbl("Scrap Rate (per unit)", "scrap_rate"))
+        scrap_col.addWidget(_lbl("Scrap Rate (unit cost)", "scrap_rate"))
         scrap_val = v.get("scrap_rate", "")
         self.scrap_in = QLineEdit("" if not scrap_val else fmt(scrap_val))
         self.scrap_in.setPlaceholderText("e.g. 50")
@@ -1779,7 +1779,7 @@ class MaterialDialog(QDialog):
                 )
                 si_sym = _unit_sym(si_unit_code)
                 short_name = info["name"].split(",")[-1].strip()
-                item = QStandardItem(f"{sym} - {short_name}")
+                item = QStandardItem(f"{sym} ({short_name})")
                 item.setData(code, Qt.UserRole)
                 tooltip = (
                     f"1 {sym} = {si_val:g} {si_sym}  |  Example: {info['example']}"

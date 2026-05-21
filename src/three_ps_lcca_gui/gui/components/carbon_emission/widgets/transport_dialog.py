@@ -341,7 +341,7 @@ class TransportDialog(QDialog):
         self.search_in.textChanged.connect(self._on_search)
         search_row.addWidget(self.search_in)
 
-        self.select_all_btn = QPushButton("Select with Qty")
+        self.select_all_btn = QPushButton("Select with Quantity")
         self.select_all_btn.setFixedHeight(32)
         self.select_all_btn.setMinimumWidth(110)
         self.select_all_btn.setCursor(Qt.PointingHandCursor)
@@ -356,7 +356,7 @@ class TransportDialog(QDialog):
         self.mat_table = _TransportTable()
         self.mat_table.setColumnCount(6)
         self.mat_table.setHorizontalHeaderLabels(
-            ["", "Material", "Category", "Unit", "kg / unit", "Qty (kg)"]
+            ["", "Material", "Category", "Unit", "kg / unit", "Quantity (kg)"]
         )
         self.mat_table.verticalHeader().setVisible(False)
         self.mat_table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -647,9 +647,9 @@ class TransportDialog(QDialog):
             qi.setForeground(_grey)
         self.mat_table.setItem(row, 5, qi)
 
-        # Dim zero-qty rows so user knows Select with Qty will skip them
+        # Dim zero-quantity rows so user knows Select with Quantity will skip them
         if qty == 0 and not is_assigned:
-            tip = "No quantity defined in structure - skipped by 'Select with Qty'"
+            tip = "No quantity defined in structure - skipped by 'Select with Quantity'"
             for col in (1, 2, 3, 5):
                 it = self.mat_table.item(row, col)
                 if it:
@@ -805,7 +805,7 @@ class TransportDialog(QDialog):
 
         # Single update after all checkboxes are set
         self._update_summary()
-        self.select_all_btn.setText("Deselect All" if target else "Select with Qty")
+        self.select_all_btn.setText("Deselect All" if target else "Select with Quantity")
 
     def _refresh_mat_count(self):
         visible = sum(
@@ -818,7 +818,7 @@ class TransportDialog(QDialog):
         self._refresh_select_all_label()
 
     def _refresh_select_all_label(self):
-        """Keep Select with Qty / Deselect All label in sync."""
+        """Keep Select with Quantity / Deselect All label in sync."""
         enabled_checkboxes = [
             chk
             for row in range(self.mat_table.rowCount())
@@ -832,7 +832,7 @@ class TransportDialog(QDialog):
             return
         all_checked = all(c.isChecked() for c in enabled_checkboxes)
         self.select_all_btn.setText(
-            "Deselect All" if all_checked else "Select with Qty"
+            "Deselect All" if all_checked else "Select with Quantity"
         )
 
     def _on_pool_toggled(self, checked: bool):

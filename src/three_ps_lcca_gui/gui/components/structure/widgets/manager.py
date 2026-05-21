@@ -67,7 +67,7 @@ class StructureManagerWidget(QWidget):
         self.main_layout.addWidget(self.scroll)
 
         btn_layout = QHBoxLayout()
-        self.add_comp_btn = QPushButton("+ Add Component Section")
+        self.add_comp_btn = QPushButton("+ Add Component")
         self.add_comp_btn.clicked.connect(self.add_new_component)
         btn_layout.addWidget(self.add_comp_btn)
         btn_layout.addStretch()
@@ -401,7 +401,12 @@ class StructureManagerWidget(QWidget):
             QTimer.singleShot(0, _do_refresh)
 
     def add_new_component(self):
-        name, ok = QInputDialog.getText(self, "New Component", "Enter Component Name:")
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle("New Component")
+        dialog.setLabelText("Enter Component Name:")
+        dialog.setOkButtonText("Add")
+        ok = dialog.exec()
+        name = dialog.textValue()
         if ok and name.strip():
             clean_name = name.strip()
             self.create_section(clean_name)

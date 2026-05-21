@@ -3,6 +3,7 @@ Reusable table widgets shared across the application.
 
 Exports:
     GroupedHeaderView       - two-tier grouped horizontal header
+    WordWrapHeaderView      - single-tier header with word wrap (installed globally)
     BaseActionDelegate      - base for painted action-column delegates
     TooltipTableMixin       - mixin that shows cell tooltip on overflow
     TableDoubleSpinBox      - QDoubleSpinBox styled for table cells
@@ -53,19 +54,32 @@ class GroupedHeaderView(QHeaderView):
 
     def sizeHint(self):
         s = super().sizeHint()
-        return QSize(s.width(), s.height() * 2) if self._groups else s
+        if self._groups:
+            return QSize(s.width(), s.height() * 2)
+        return QSize(s.width(), max(s.height(), 44))
 
     def paintSection(self, painter, rect, logical_index):
         if self._font:
             painter.setFont(self._font)
-        if not self._groups or logical_index not in self._col_group:
-            super().paintSection(painter, rect, logical_index)
+        if self._groups and logical_index in self._col_group:
+            h2     = rect.height() // 2
+            bottom = QRect(rect.x(), rect.y() + h2, rect.width(), h2)
+            painter.save()
+            painter.setClipRect(bottom)
+            super().paintSection(painter, bottom, logical_index)
+            painter.restore()
             return
-        h2     = rect.height() // 2
-        bottom = QRect(rect.x(), rect.y() + h2, rect.width(), h2)
+        # Paint background/frame via style (no text), then draw word-wrapped text manually
         painter.save()
-        painter.setClipRect(bottom)
-        super().paintSection(painter, bottom, logical_index)
+        opt = QStyleOptionHeader()
+        self.initStyleOption(opt)
+        opt.rect    = rect
+        opt.section = logical_index
+        opt.text    = ""
+        self.style().drawControl(QStyle.ControlElement.CE_Header, opt, painter, self)
+        text = self.model().headerData(logical_index, Qt.Horizontal, Qt.DisplayRole) or ""
+        text_rect = rect.adjusted(6, 4, -6, -4)
+        painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap, str(text))
         painter.restore()
 
     def paintEvent(self, event):
@@ -92,6 +106,39 @@ class GroupedHeaderView(QHeaderView):
                 self.style().ControlElement.CE_Header, opt, painter, self
             )
         painter.end()
+
+
+# ---------------------------------------------------------------------------
+# Word-wrap header (no groups) — installed globally on plain QTableWidget/View
+# ---------------------------------------------------------------------------
+
+class WordWrapHeaderView(QHeaderView):
+    """Horizontal header that paints column labels with word wrap and left alignment."""
+
+    _MIN_HEIGHT = 44
+
+    def __init__(self, orientation=Qt.Horizontal, font=None, parent=None):
+        super().__init__(orientation, parent)
+        self._font = font
+
+    def sizeHint(self):
+        s = super().sizeHint()
+        return QSize(s.width(), max(s.height(), self._MIN_HEIGHT))
+
+    def paintSection(self, painter, rect, logical_index):
+        if self._font:
+            painter.setFont(self._font)
+        painter.save()
+        opt = QStyleOptionHeader()
+        self.initStyleOption(opt)
+        opt.rect    = rect
+        opt.section = logical_index
+        opt.text    = ""
+        self.style().drawControl(QStyle.ControlElement.CE_Header, opt, painter, self)
+        text = self.model().headerData(logical_index, self.orientation(), Qt.DisplayRole) or ""
+        text_rect = rect.adjusted(6, 4, -6, -4)
+        painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap, str(text))
+        painter.restore()
 
 
 # ---------------------------------------------------------------------------

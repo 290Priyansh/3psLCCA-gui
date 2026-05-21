@@ -200,8 +200,7 @@ class _FrozenActionTable(QTableWidget):
 
 
 class StructureTableWidget(TooltipTableMixin, QTableWidget):
-    # Col 2-3 → "Qty" group (Value + Unit)
-    _GROUPS = [(2, 2, "Qty")]
+    _GROUPS = []
 
     def __init__(self, parent_manager, component_name, is_trash_view=False):
         super().__init__()
@@ -216,21 +215,19 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
         # The frozen overlay renders the Action UI on top of the reserved right margin.
         self.setColumnCount(8)
         _L = Qt.AlignLeft | Qt.AlignVCenter
-        _R = Qt.AlignRight | Qt.AlignVCenter
-        _C = Qt.AlignCenter | Qt.AlignVCenter
         _headers = [
-            ("Work Name", _L),  # 0
-            ("Rate", _R),  # 1
-            ("Value", _C),  # 2  ┐ Qty group
-            ("Unit", _C),  # 3  ┘
-            ("Source", _L),  # 4
-            ("Total", _R),  # 5
-            ("Action", _C),  # 6  hidden - data/delegate only
-            ("", _C),  # 7  placeholder - same width as overlay, keeps Total visible
+            "Work Name",   # 0
+            "Quantity",    # 1
+            "Unit",        # 2
+            "Rate/Unit",   # 3
+            "Source",      # 4
+            "Total",       # 5
+            "Action",      # 6  hidden - data/delegate only
+            "",            # 7  placeholder - same width as overlay, keeps Total visible
         ]
-        for col, (label, align) in enumerate(_headers):
+        for col, label in enumerate(_headers):
             item = QTableWidgetItem(label)
-            item.setTextAlignment(align)
+            item.setTextAlignment(_L)
             self.setHorizontalHeaderItem(col, item)
 
         hdr = self.horizontalHeader()
@@ -238,6 +235,7 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
         hdr.setStretchLastSection(False)
         hdr.setMinimumSectionSize(60)
         hdr.setSectionResizeMode(5, QHeaderView.Stretch)  # Total fills remaining space
+        self.setColumnWidth(3, 110)
         hdr.setSectionResizeMode(6, QHeaderView.Fixed)
         self.setColumnWidth(6, 0)
         self.setColumnHidden(6, True)
@@ -288,7 +286,7 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
 
     def set_currency(self, code: str):
         suffix = f" ({code})" if code else ""
-        for col, base in ((1, "Rate"), (5, "Total")):
+        for col, base in ((3, "Rate/Unit"), (5, "Total")):
             item = self.horizontalHeaderItem(col)
             if item:
                 item.setText(base + suffix)
@@ -321,17 +319,17 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
 
         self.setItem(row, 0, QTableWidgetItem(v.get("material_name", "New Item")))
 
-        rate_item = QTableWidgetItem(fmt_comma(v.get("rate", 0)))
-        rate_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.setItem(row, 1, rate_item)
-
         qty_item = QTableWidgetItem(fmt(v.get("quantity", 0)))
         qty_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.setItem(row, 2, qty_item)
+        self.setItem(row, 1, qty_item)
 
         unit = v.get("unit", "")
         unit = UNIT_DISPLAY.get(unit.lower(), unit) if unit else unit
-        self.setItem(row, 3, QTableWidgetItem(unit))
+        self.setItem(row, 2, QTableWidgetItem(unit))
+
+        rate_item = QTableWidgetItem(fmt_comma(v.get("rate", 0)))
+        rate_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.setItem(row, 3, rate_item)
 
         self.setItem(row, 4, QTableWidgetItem(v.get("rate_source", "Manual")))
 
@@ -381,17 +379,17 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
 
         self.setItem(pos, 0, QTableWidgetItem(v.get("material_name", "New Item")))
 
-        rate_item = QTableWidgetItem(fmt_comma(v.get("rate", 0)))
-        rate_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.setItem(pos, 1, rate_item)
-
         qty_item = QTableWidgetItem(fmt(v.get("quantity", 0)))
         qty_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.setItem(pos, 2, qty_item)
+        self.setItem(pos, 1, qty_item)
 
         unit = v.get("unit", "")
         unit = UNIT_DISPLAY.get(unit.lower(), unit) if unit else unit
-        self.setItem(pos, 3, QTableWidgetItem(unit))
+        self.setItem(pos, 2, QTableWidgetItem(unit))
+
+        rate_item = QTableWidgetItem(fmt_comma(v.get("rate", 0)))
+        rate_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.setItem(pos, 3, rate_item)
 
         self.setItem(pos, 4, QTableWidgetItem(v.get("rate_source", "Manual")))
 
@@ -472,9 +470,9 @@ class StructureTableWidget(TooltipTableMixin, QTableWidget):
 
         ratios = {
             0: 0.36,  # Work Name
-            1: 0.13,  # Rate
-            2: 0.08,  # Qty › Value
-            3: 0.08,  # Qty › Unit
+            1: 0.10,  # Quantity
+            2: 0.08,  # Unit
+            3: 0.11,  # Rate/Unit
             4: 0.15,  # Source
             5: 0.20,  # Total
         }

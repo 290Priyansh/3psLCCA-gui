@@ -69,7 +69,7 @@ class StructureTabView(QWidget):
         top_layout = QHBoxLayout(top_area)
 
         region_info = QVBoxLayout()
-        region_info.addWidget(QLabel("<b>Structure Management</b>"))
+        region_info.addWidget(QLabel("<b>Construction Works Data</b>"))
         region_info.addWidget(QLabel("Project: Active Analysis"))
         top_layout.addLayout(region_info)
 
@@ -77,7 +77,7 @@ class StructureTabView(QWidget):
 
         # Action Buttons
         self.excel_btn = QPushButton("Upload Excel")
-        self.trash_btn = QPushButton("Trash")
+        self.trash_btn = QPushButton("🗑️")
 
         top_layout.addWidget(self.excel_btn)
         top_layout.addWidget(self.trash_btn)
@@ -215,9 +215,9 @@ class StructureTabView(QWidget):
                         total_count += 1
 
         if total_count > 0:
-            self.trash_btn.setText(f"Trash ({total_count})")
+            self.trash_btn.setText(f"🗑️ ({total_count})")
         else:
-            self.trash_btn.setText("Trash")
+            self.trash_btn.setText("🗑️")
 
     def _open_excel_import(self):
         path, _ = QFileDialog.getOpenFileName(

@@ -663,7 +663,7 @@ def _validate_for_engine(
 IMPORT_COLUMNS: list[tuple[str, str, bool]] = [
     ("id", "ID", False),
     ("name", "Name *", False),
-    ("quantity", "Qty", True),
+    ("quantity", "Quantity", True),
     ("unit", "Unit *", False),
     ("rate", "Rate *", True),
     ("rate_src", "Rate Source", False),
@@ -679,7 +679,7 @@ IMPORT_COLUMNS: list[tuple[str, str, bool]] = [
 ]
 
 # Column widths - tuned to content, not header length
-#  ID   Name   Qty   Unit  Rate  RateSrc  CEF  CUnit  CF  CESrc  Scrap  Rec%  Grade  Type  Issues
+#  ID   Name   Quantity   Unit  Rate  RateSrc  CEF  CUnit  CF  CESrc  Scrap  Rec%  Grade  Type  Issues
 _COL_WIDTHS = [55, 200, 55, 65, 80, 140, 80, 110, 90, 140, 75, 80, 70, 90, 200]
 
 # Col 0 is the selection checkbox; all IMPORT_COLUMNS data starts at col 1
@@ -949,7 +949,7 @@ class ImportComponentTable(QTableWidget):
     # -- filter ---------------------------------------------------------------
 
     def apply_valid_qty_filter(self, enabled: bool):
-        """Show/hide rows where Name, Qty, Rate, or Unit are missing/zero."""
+        """Show/hide rows where Name, Quantity, Rate, or Unit are missing/zero."""
         self._valid_core_only = enabled
         self._populate()
 
@@ -1080,7 +1080,7 @@ class ComponentBlock(QGroupBox):
 
         # ── Empty placeholder (shown when filter hides everything) ────────
         self._empty_lbl = QLabel(
-            "All rows hidden by filter (missing/zero Name, Qty, Rate, or Unit)."
+            "All rows hidden by filter (missing/zero Name, Quantity, Rate, or Unit)."
         )
         self._empty_lbl.setStyleSheet(f"color: {get_token('text_disabled')}; font-style: italic; padding: 4px;")
         self._empty_lbl.setVisible(False)

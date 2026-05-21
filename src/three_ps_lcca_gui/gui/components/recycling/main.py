@@ -75,7 +75,7 @@ def is_recyclable_valid(item: dict) -> bool:
 
 
 def calc_recyclable_qty(item: dict) -> float:
-    """Recyclable Qty = quantity × (recyclability% / 100)"""
+    """Recyclable Quantity = quantity × (recyclability% / 100)"""
     v = item.get("values", {})
     try:
         return float(v.get("quantity", 0) or 0) * (_recycle_pct(v) / 100)
@@ -242,16 +242,16 @@ class RecyclingTable(TooltipTableMixin, QTableWidget):
     _R = Qt.AlignRight | Qt.AlignVCenter
     _C = Qt.AlignCenter
 
-    # Cols 2-3 → "Qty" group (Value + Unit)
-    _GROUPS = [(2, 2, "Qty")]
+    # Cols 2-3 → "Quantity" group (Value + Unit)
+    _GROUPS = [(2, 2, "Quantity")]
 
     INCLUDED_HEADERS = [
         ("Category", _L),  # 0
         ("Material", _L),  # 1
-        ("Value", _C),  # 2  ┐ Qty group
+        ("Value", _C),  # 2  ┐ Quantity group
         ("Unit", _C),  # 3  ┘
         ("Recyclability %", _R),  # 4
-        ("Recyclable Qty", _R),  # 5
+        ("Recyclable Quantity", _R),  # 5
         ("Scrap Rate", _R),  # 6
         ("Recovered Value", _R),  # 7
         ("Warning", _L),  # 8
@@ -262,7 +262,7 @@ class RecyclingTable(TooltipTableMixin, QTableWidget):
     EXCLUDED_HEADERS = [
         ("Category", _L),  # 0
         ("Material", _L),  # 1
-        ("Value", _C),  # 2  ┐ Qty group
+        ("Value", _C),  # 2  ┐ Quantity group
         ("Unit", _C),  # 3  ┘
         ("Recyclability %", _R),  # 4
         ("Scrap Rate", _R),  # 5
@@ -335,10 +335,10 @@ class RecyclingTable(TooltipTableMixin, QTableWidget):
             widths = {
                 0: max(120, int(rest * 0.09)),  # Category
                 1: max(100, int(rest * 0.21)),  # Material
-                2: qty_sub,  # Qty › Value
-                3: qty_sub,  # Qty › Unit
+                2: qty_sub,  # Quantity › Value
+                3: qty_sub,  # Quantity › Unit
                 4: max(55, int(rest * 0.08)),  # Recyclability %
-                5: max(70, int(rest * 0.11)),  # Recyclable Qty
+                5: max(70, int(rest * 0.11)),  # Recyclable Quantity
                 6: max(55, int(rest * 0.08)),  # Scrap Rate
                 7: max(80, int(rest * 0.12)),  # Recovered Value
                 8: max(80, int(rest * 0.19)),  # Warning
@@ -347,8 +347,8 @@ class RecyclingTable(TooltipTableMixin, QTableWidget):
             widths = {
                 0: max(120, int(rest * 0.10)),  # Category
                 1: max(100, int(rest * 0.22)),  # Material
-                2: qty_sub,  # Qty › Value
-                3: qty_sub,  # Qty › Unit
+                2: qty_sub,  # Quantity › Value
+                3: qty_sub,  # Quantity › Unit
                 4: max(55, int(rest * 0.08)),  # Recyclability %
                 5: max(55, int(rest * 0.08)),  # Scrap Rate
                 6: max(100, int(rest * 0.40)),  # Reason
@@ -532,7 +532,7 @@ class Recycling(QWidget):
                 item,
                 value,
                 (
-                    "! Zero Qty"
+                    "! Zero Quantity"
                     if float(item.get("values", {}).get("quantity", 0) or 0) == 0
                     else ""
                 ),

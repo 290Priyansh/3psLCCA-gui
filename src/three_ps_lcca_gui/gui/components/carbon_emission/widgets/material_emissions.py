@@ -286,15 +286,15 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
     _L = Qt.AlignLeft | Qt.AlignVCenter
     _R = Qt.AlignRight | Qt.AlignVCenter
 
-    # Cols 2-3 → "Qty" group;  cols 5-6 → "Emission" group
-    _GROUPS = [(2, 2, "Qty"), (5, 2, "Emission")]
+    # Cols 2-3 → "Quantity" group;  cols 5-6 → "Emission" group
+    _GROUPS = [(2, 2, "Quantity"), (5, 2, "Emission")]
 
     _C = Qt.AlignCenter | Qt.AlignVCenter
 
     INCLUDED_HEADERS = [
         ("Category", _L),  # 0
         ("Material", _L),  # 1
-        ("Value", _C),  # 2  ┐ Qty group (sub-col → center)
+        ("Value", _C),  # 2  ┐ Quantity group (sub-col → center)
         ("Unit", _C),  # 3  ┘
         ("Conv. Factor", _R),  # 4
         ("Value", _C),  # 5  ┐ Emission group (sub-col → center)
@@ -307,7 +307,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
     EXCLUDED_HEADERS = [
         ("Category", _L),  # 0
         ("Material", _L),  # 1
-        ("Value", _C),  # 2  ┐ Qty group (sub-col → center)
+        ("Value", _C),  # 2  ┐ Quantity group (sub-col → center)
         ("Unit", _C),  # 3  ┘
         ("Conv. Factor", _R),  # 4
         ("Value", _C),  # 5  ┐ Emission group (sub-col → center)
@@ -385,8 +385,8 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
             widths = {
                 0: max(120, int(rest * 0.09)),  # Category
                 1: max(100, int(rest * 0.20)),  # Material
-                2: qty_sub,  # Qty › Value
-                3: qty_sub,  # Qty › Unit
+                2: qty_sub,  # Quantity › Value
+                3: qty_sub,  # Quantity › Unit
                 4: max(120, int(rest * 0.09)),  # Conv. Factor
                 5: em_sub,  # Emission › Value
                 6: em_sub,  # Emission › Unit
@@ -397,8 +397,8 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
             widths = {
                 0: max(120, int(rest * 0.10)),  # Category
                 1: max(100, int(rest * 0.22)),  # Material
-                2: qty_sub,  # Qty › Value
-                3: qty_sub,  # Qty › Unit
+                2: qty_sub,  # Quantity › Value
+                3: qty_sub,  # Quantity › Unit
                 4: max(120, int(rest * 0.09)),  # Conv. Factor
                 5: em_sub,  # Emission › Value
                 6: em_sub,  # Emission › Unit
@@ -666,7 +666,7 @@ class MaterialEmissions(QWidget):
             # Persistent Warnings: Check for zero qty or if the confirmed factor is still suspicious
             warnings = []
             if float(v.get("quantity", 0) or 0) == 0:
-                warnings.append("Zero Qty")
+                warnings.append("Zero Quantity")
             if analysis["is_suspicious"]:
                 warnings.append("⚠️ Conversion Factor seems incorrect.")
 
@@ -831,7 +831,7 @@ class MaterialEmissions(QWidget):
             t.setItem(row, 7, carbon_item)
             warnings = []
             if float(v.get("quantity", 0) or 0) == 0:
-                warnings.append("Zero Qty")
+                warnings.append("Zero Quantity")
             if analysis["is_suspicious"]:
                 warnings.append("⚠️ Conversion Factor seems incorrect.")
             t.setItem(row, 8, QTableWidgetItem(", ".join(warnings)))

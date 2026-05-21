@@ -29,7 +29,7 @@ from ...utils.table_widgets import TooltipTableMixin
 class _TransportEmissionsTable(TooltipTableMixin, QTableWidget):
     """QTableWidget with tooltip + word-wrap for transport emissions rows."""
 
-    # Material, Category, kg Factor, Qty (kg), Trips, Emission, Warnings
+    # Material, Category, kg Factor, Quantity (kg), Trips, Emission, Warnings
     _COL_RATIOS = [0.20, 0.12, 0.09, 0.11, 0.07, 0.16, 0.25]
     _COL_MINS   = [80,   60,   55,   70,   45,   100,  80]
 
@@ -301,7 +301,7 @@ class VehicleCard(QGroupBox):
             ("Material",          _L),
             ("Category",          _L),
             ("kg Factor",         _R),
-            ("Qty (kg)",          _R),
+            ("Quantity (kg)",      _R),
             ("Trips",             _R),
             ("Emission (kgCO₂e)", _R),
             ("Warnings",          _L),

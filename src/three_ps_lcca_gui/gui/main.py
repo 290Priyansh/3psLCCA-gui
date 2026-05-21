@@ -12,7 +12,6 @@ SafeChunkEngine.APP_AUTHOR = APP_AUTHOR
 
 from PySide6.QtWidgets import (
     QApplication,
-    QLabel,
     QSpinBox,
     QDoubleSpinBox,
     QComboBox,
@@ -20,6 +19,11 @@ from PySide6.QtWidgets import (
     QProxyStyle,
     QStyle,
     QTableView,
+    QTableWidget,
+)
+from three_ps_lcca_gui.gui.components.utils.table_widgets import (
+    GroupedHeaderView,
+    WordWrapHeaderView,
 )
 from PySide6.QtCore import QObject, QEvent, Qt, QTimer, QCoreApplication
 from PySide6.QtGui import QFont, QFontDatabase, QIcon
@@ -80,12 +84,30 @@ class _TableRowSelectFilter(QObject):
         return super().eventFilter(obj, event)
 
 
-class _LabelWordWrapFilter(QObject):
-    """Enables word wrap on every QLabel when it is polished."""
+
+class _TableHeaderWordWrapFilter(QObject):
+    """Installs WordWrapHeaderView on every QTableWidget/QTableView that does not
+    already use GroupedHeaderView (which handles word wrap itself)."""
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.Polish and isinstance(obj, QLabel):
-            obj.setWordWrap(True)
+        if event.type() == QEvent.Polish and isinstance(obj, (QTableWidget, QTableView)):
+            hdr = obj.horizontalHeader()
+            if not isinstance(hdr, (GroupedHeaderView, WordWrapHeaderView)):
+                count = hdr.count()
+                modes  = [hdr.sectionResizeMode(i) for i in range(count)]
+                sizes  = [hdr.sectionSize(i) for i in range(count)]
+                hidden = [hdr.isSectionHidden(i) for i in range(count)]
+                stretch_last = hdr.stretchLastSection()
+                min_size = hdr.minimumSectionSize()
+                new_hdr = WordWrapHeaderView(Qt.Horizontal, parent=obj)
+                obj.setHorizontalHeader(new_hdr)
+                new_hdr.setStretchLastSection(stretch_last)
+                new_hdr.setMinimumSectionSize(min_size)
+                for i in range(count):
+                    new_hdr.setSectionResizeMode(i, modes[i])
+                    new_hdr.resizeSection(i, sizes[i])
+                    if hidden[i]:
+                        new_hdr.hideSection(i)
         return super().eventFilter(obj, event)
 
 
@@ -190,14 +212,14 @@ def main():
 
     # Install Global Event Filters
     # NOTE: named references required - Python GC will collect anonymous instances
-    wheel_filter = DisableSpinBoxScroll()
-    table_filter = _TableRowSelectFilter()
-    focus_filter = SelectTextOnFocus()
-    label_wrap_filter = _LabelWordWrapFilter()
+    wheel_filter      = DisableSpinBoxScroll()
+    table_filter      = _TableRowSelectFilter()
+    focus_filter      = SelectTextOnFocus()
+    hdr_wrap_filter   = _TableHeaderWordWrapFilter()
     app.installEventFilter(wheel_filter)
     app.installEventFilter(table_filter)
     app.installEventFilter(focus_filter)
-    app.installEventFilter(label_wrap_filter)
+    app.installEventFilter(hdr_wrap_filter)
 
     # Runtime Theme Switching (Qt 6.5+)
     try:

@@ -102,6 +102,7 @@ class NewProjectDialog(QDialog):
         layout.addWidget(self.currency_input)
 
         currency_hint = QLabel("Auto-filled based on the selected country. Cannot be changed after project creation.")
+        currency_hint.setWordWrap(True)
         currency_hint.setEnabled(False)
         layout.addWidget(currency_hint)
 
