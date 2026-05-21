@@ -174,7 +174,7 @@ class LCCATemplate:
         design_life = bd.get("design_life", 0)
 
         return {
-            "Name of bridge":
+            "Name of the Bridge":
                 _v(bd.get("bridge_name")),
             "Name of user/agency":
                 _v(bd.get("user_agency")),

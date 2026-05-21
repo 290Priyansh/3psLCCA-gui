@@ -34,14 +34,14 @@ BRIDGE_FIELDS = [
     Section("Bridge Identification"),
     FieldDef(
         "bridge_name",
-        "Name of Bridge",
+        "Name of the Bridge",
         "",
         "text"
     ),
     FieldDef(
         "user_agency",
         "Owner",
-        "Name of the owner, client, or responsible agency for this bridge.",
+        "[Name of the owner, client, or responsible agency for this bridge.]",
         "text"
     ),
     # ── Location ─────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "project_country",
         "Country",
-        "Country in which the bridge is situated. Set at project creation.",
+        "[Country in which the bridge is situated.]",
         "text",
         blocked=True,
     ),
@@ -74,7 +74,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "location",
         "Bridge Alignment & Location",
-        "Bridge start point, end point, crossed feature (river, valley, railway, highway), and nearby landmarks or route details.",
+        "[Bridge start point, end point, crossed feature (river, valley, railway, highway), and nearby landmarks or route details.]",
         "text"
     ),
     # ── Technical Specifications ─────────────────────────────────────────
@@ -82,7 +82,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "bridge_type",
         "Type of Bridge",
-        "Structural classification of the bridge (e.g. Girder, Arch, Cable-stayed).",
+        "[Structural classification of the bridge (e.g. Girder, Arch, Cable-stayed).]",
         "combo",
         options=[
             "Girder",
@@ -98,7 +98,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "span",
         "Span",
-        "Total span length of the bridge between supports.",
+        "[Total span length of the bridge between supports.]",
         "float",
         options=(0.0, 99999.0, DECIMAL_PLACES),
         unit="(m)",
@@ -107,7 +107,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "carriageway_width",
         "Carriageway Width",
-        "Clear width of the roadway portion of the bridge deck.",
+        "[Clear width of the roadway portion of the bridge deck expressed in meters.]",
         "float",
         options=(0.0, 9999.0, DECIMAL_PLACES),
         unit="(m)",
@@ -116,7 +116,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "num_lanes",
         "Number of Lanes",
-        "Total number of traffic lanes on the bridge deck.",
+        "[Total number of traffic lanes on the bridge deck.]",
         "int",
         options=(0, 50),
         default=0,
@@ -124,34 +124,34 @@ BRIDGE_FIELDS = [
     FieldDef(
         "vehicle_path_direction",
         "Vehicle Path Direction",
-        "Indicates whether the road allows one-way or two-way traffic.",
+        "[Indicates whether the road allows one-way or two-way traffic.]",
         "combo",
         options=["One Way", "Two Way"],
     ),
     FieldDef(
         "footpath",
         "Footpath",
-        "Indicates whether a dedicated pedestrian footpath is provided.",
+        "[Indicates whether the dedicated pedestrian footpath is provided.]",
         "combo",
-        options=["Yes", "No"],
+        options=["No footpath", "Footpath at one side", "Footpath at both sides"],
         doc_slug=["Bridge_data", "Footpath"],
     ),
-    FieldDef(
-        "wind_speed",
-        "Wind Speed",
-        "Design wind speed used for structural analysis at the bridge site.",
-        "float",
-        options=(0.0, 999.0, DECIMAL_PLACES),
-        unit="(m/s)",
-        default=0.0,
-        doc_slug=["Bridge_data", "Wind_Speed"],
-    ),
+    # FieldDef(
+    #     "wind_speed",
+    #     "Wind Speed",
+    #     "Design wind speed used for structural analysis at the bridge site.",
+    #     "float",
+    #     options=(0.0, 999.0, DECIMAL_PLACES),
+    #     unit="(m/s)",
+    #     default=0.0,
+    #     doc_slug=["Bridge_data", "Wind_Speed"],
+    # ),
     # ── Life Cycle ───────────────────────────────────────────────────────
     Section("Life Cycle"),
     FieldDef(
         "design_life",
         "Design Life",
-        "Expected operational lifetime of the bridge structure.",
+        "[Expected operation/service life of the bridge structure expressed in years.]",
         "int",
         options=(0, 999),
         unit="(years)",
@@ -162,8 +162,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "year_of_construction",
         "Year of Construction",
-        "Year the bridge was (or is planned to be) constructed, used as the "
-        "baseline for life cycle cost assessment.",
+        "[Year the bridge was (or is planned to be) constructed.]",
         "int",
         options=(2000, 2500),
         required=True,
@@ -175,7 +174,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "duration_construction_months",
         "Duration of Construction",
-        "Construction duration expressed in months.",
+        "[Construction duration expressed in months.]",
         "float",
         options=(0.0, 1200.0, DECIMAL_PLACES),
         required=True,
@@ -195,7 +194,7 @@ BRIDGE_FIELDS = [
     FieldDef(
         "days_per_month",
         "Days per Month",
-        "Days assumed per month the traffic of the road is affected.",
+        "[Days assumed per month the traffic of the road is affected.]",
         "int",
         options=(0, 31),
         unit="(days)",
@@ -213,7 +212,7 @@ BRIDGE_WARN_RULES = {
         "Carriageway width exceeds 50 m - please verify",
     ),
     "num_lanes": (None, 16, None, "Number of lanes exceeds 16 - please verify"),
-    "wind_speed": (None, 80.0, None, "Wind speed exceeds 80 m/s - please verify"),
+    # "wind_speed": (None, 80.0, None, "Wind speed exceeds 80 m/s - please verify"),
     "design_life": (
         10,
         200,

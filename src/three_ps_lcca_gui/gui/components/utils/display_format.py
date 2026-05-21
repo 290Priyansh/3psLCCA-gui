@@ -7,7 +7,7 @@ Change DECIMAL_PLACES once here - it propagates to every table cell,
 result label, formula preview, and input field across the app.
 """
 
-DECIMAL_PLACES: int = 3
+DECIMAL_PLACES: int = 2
 
 
 def fmt(val) -> str:
