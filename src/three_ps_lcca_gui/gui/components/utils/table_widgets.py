@@ -296,6 +296,14 @@ class BaseActionDelegate(QStyledItemDelegate):
 # Tooltip mixin for QTableWidget subclasses
 # ---------------------------------------------------------------------------
 
+def round_table_viewport(table) -> None:
+    """Clip the viewport background to the table's rounded border corners."""
+    table.viewport().setStyleSheet(
+        "border-bottom-left-radius: 7px; border-bottom-right-radius: 7px;"
+        " background-color: transparent;"
+    )
+
+
 class TooltipTableMixin:
     """Mixin for QTableWidget: always shows a tooltip with the full cell text,
     and enables word wrap + ElideNone so text is never silently cut off.
@@ -306,6 +314,7 @@ class TooltipTableMixin:
         super().__init__(*args, **kwargs)
         self.setWordWrap(True)
         self.setTextElideMode(Qt.ElideNone)
+        round_table_viewport(self)
 
     def viewportEvent(self, event):
         if event.type() == QEvent.ToolTip:

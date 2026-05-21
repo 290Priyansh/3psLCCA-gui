@@ -26,6 +26,7 @@ from three_ps_lcca_gui.gui.theme import (
     SP2, SP3, SP4, SP8, SP10,
 )
 from three_ps_lcca_gui.gui.themes import get_token
+from three_ps_lcca_gui.gui.components.utils.table_widgets import round_table_viewport
 from three_ps_lcca_gui.gui.styles import font as _f
 
 
@@ -147,6 +148,7 @@ class CheckpointManagerDialog(QDialog):
 
         # Table
         self.table = QTableWidget()
+        round_table_viewport(self.table)
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Label", "Date & Time", "Notes", "File"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)

@@ -189,8 +189,12 @@ class _FrozenActionTable(QTableWidget):
                 background-color: palette(base);
                 border-top-left-radius: 0px;
                 border-bottom-left-radius: 0px;
+                border-bottom-right-radius: 7px;
             }
         """
+        )
+        self.viewport().setStyleSheet(
+            "border-bottom-right-radius: 7px; background-color: transparent;"
         )
 
         self.verticalHeader().setVisible(False)

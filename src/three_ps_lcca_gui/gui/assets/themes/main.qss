@@ -544,8 +544,18 @@ QHeaderView::section {
     font-size: 11px;
 }
 
+QHeaderView::section:first {
+    border-top-left-radius: 7px;
+}
+
 QHeaderView::section:last {
     border-right: none;
+    border-top-right-radius: 7px;
+}
+
+QHeaderView::section:only-one {
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
 }
 
 QTableView QTableCornerButton::section {

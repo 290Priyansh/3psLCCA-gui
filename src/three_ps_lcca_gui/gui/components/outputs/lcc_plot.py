@@ -15,6 +15,7 @@ from three_ps_lcca_gui.gui.theme import (
     FW_NORMAL, FW_MEDIUM, FW_SEMIBOLD, FW_BOLD, SP4, SP2
 )
 from three_ps_lcca_gui.gui.components.utils.display_format import fmt_currency
+from three_ps_lcca_gui.gui.components.utils.table_widgets import round_table_viewport
 from .plots_helper.Pie import COLORS
 from .helper_functions.lcc_colors import COLORS as LCC_PALETTE
 from .lcc_data import (
@@ -176,6 +177,7 @@ class LCCDetailsTable(QWidget):
         lay.setSpacing(SP4)
 
         self.table = QTableWidget()
+        round_table_viewport(self.table)
         self.table.setColumnCount(5)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)

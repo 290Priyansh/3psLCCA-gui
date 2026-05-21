@@ -73,6 +73,18 @@ def btn_outline_primary(radius: int = RADIUS_MD) -> str:
     )
 
 
+def btn_danger(radius: int = RADIUS_MD) -> str:
+    """Filled danger button - destructive action (Delete, etc.)."""
+    return (
+        f"QPushButton {{ background: {get_token('danger')}; color: {get_token('base')}; border: none;"
+        f"  border-radius: {radius}px; padding-left: 16px; padding-right: 16px;"
+        f"  font-weight: {get_token('weight-semibold')}; }}"
+        f"QPushButton:hover   {{ background: {get_token('danger', 'hover')}; }}"
+        f"QPushButton:pressed {{ background: {get_token('danger', 'pressed')}; }}"
+        f"QPushButton:disabled {{ background: {get_token('danger', 'disabled')}; }}"
+    )
+
+
 def btn_outline_danger(radius: int = RADIUS_MD) -> str:
     """Outlined danger button - destructive action (Delete, etc.)."""
     return (

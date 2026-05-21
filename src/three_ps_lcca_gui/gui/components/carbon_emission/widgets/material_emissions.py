@@ -300,7 +300,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         ("Value", _C),  # 5  ┐ Emission group (sub-col → center)
         ("Unit", _C),  # 6  ┘
         ("Total kgCO₂e", _R),  # 7
-        ("Warning", _L),  # 8
+        # ("Warning", _L),  # 8
         ("Action", _C),  # 9
         ("", _C),  # 10 placeholder - reserves space for frozen overlay
     ]
@@ -366,7 +366,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         # Initial defaults at ~800px viewport (rest ≈ 720px)
         # Sub-column pairs are equal: qty=43px each, emission=65px each
         if self.is_included:
-            for col, w in enumerate([65, 144, 43, 43, 50, 65, 65, 65, 173, 80]):
+            for col, w in enumerate([75, 164, 60, 60, 70, 85, 85, 114, 80]):
                 self.setColumnWidth(col, w)
         else:
             for col, w in enumerate([72, 158, 43, 43, 50, 65, 65, 216, 80]):
