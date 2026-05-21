@@ -353,6 +353,10 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         self.horizontalHeader().setSectionResizeMode(placeholder_col, QHeaderView.Fixed)
         self.setColumnWidth(placeholder_col, _ACTION_W)
 
+        # Material column stretches to fill remaining space
+        if is_included:
+            self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+
         # Reserve right margin so scrollable content never enters the overlay zone
         self.setViewportMargins(0, 0, _ACTION_W, 0)
 
@@ -384,14 +388,13 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         if self.is_included:
             widths = {
                 0: max(120, int(rest * 0.09)),  # Category
-                1: max(100, int(rest * 0.20)),  # Material
-                2: qty_sub,  # Quantity › Value
-                3: qty_sub,  # Quantity › Unit
+                # col 1 Material is QHeaderView.Stretch — Qt fills remaining width
+                2: qty_sub,                     # Quantity › Value
+                3: qty_sub,                     # Quantity › Unit
                 4: max(120, int(rest * 0.09)),  # Conv. Factor
-                5: em_sub,  # Emission › Value
-                6: em_sub,  # Emission › Unit
-                7: max(70, int(rest * 0.09)),  # Total kgCO₂e
-                8: max(100, int(rest * 0.23)),  # Warning
+                5: em_sub,                      # Emission › Value
+                6: em_sub,                      # Emission › Unit
+                7: max(70, int(rest * 0.09)),   # Total kgCO₂e
             }
         else:
             widths = {
