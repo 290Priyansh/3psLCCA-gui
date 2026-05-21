@@ -30,7 +30,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "routine_inspection_cost",
         "Routine Inspection Cost",
-        "Cost incurred for routine inspection expressed as percentage of initial construction cost",
+        "[Cost incurred due to routine inspection, expressed as a percentage of the initial construction cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(% of initial construction cost)",
@@ -42,10 +42,10 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "routine_inspection_freq",
         "Routine Inspection Frequency",
-        "Interval between routine inspections.",
+        "[Interval between routine inspections (expressed in years).]",
         "int",
         options=(0, 50),
-        unit="(yr)",
+        unit="(year)",
         required=True,
         default=0,
         warn=(
@@ -60,7 +60,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "periodic_maintenance_cost",
         "Periodic Maintenance Cost",
-        "Cost incurred for periodic maintenance  expressed as percentage of initial construction cost",
+        "[Cost incurred due to periodic maintenance, expressed as a percentage of the initial construction cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(% of initial construction cost)",
@@ -76,7 +76,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "periodic_maintenance_carbon_cost",
         "Periodic Maintenance Carbon Cost",
-        "Carbon emission cost of periodic maintenance expressed as a percentage of initial carbon emission cost.",
+        "[Carbon emission cost of periodic maintenance expressed as a percentage of initial carbon emission cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(%)",
@@ -92,7 +92,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "periodic_maintenance_freq",
         "Periodic Maintenance Frequency",
-        "Interval between periodic maintenance works.",
+        "[Interval between periodic maintenance works (expressed in years).]",
         "int",
         options=(0, 100),
         unit="(yr)",
@@ -110,7 +110,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_inspection_cost",
         "Major Inspection Cost",
-        "Cost of major inspection expressed as a percentage of initial construction cost.",
+        "[Cost incurred due to major inspection, expressed as a percentage of the initial construction cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(%)",
@@ -122,7 +122,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_inspection_freq",
         "Major Inspection Frequency",
-        "Interval between major inspections.",
+        "[Interval between major inspections (expressed in years).]",
         "int",
         options=(0, 100),
         unit="(yr)",
@@ -138,7 +138,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_repair_cost",
         "Major Repair Cost",
-        "Cost of major repair expressed as a percentage of initial construction cost.",
+        "[Cost incurred due to major repairs, expressed as a percentage of the initial construction cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(%)",
@@ -150,7 +150,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_repair_carbon_cost",
         "Major Repair Carbon Cost",
-        "Carbon emission cost of major repair expressed as a percentage of initial carbon emission cost.",
+        "[Carbon emissions cost incurred due to major repairs, expressed as a percentage of the initial carbon emissions cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(%)",
@@ -162,7 +162,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_repair_freq",
         "Major Repair Frequency",
-        "Interval between major repair works.",
+        "[Interval between major repair works (expressed in years).]",
         "int",
         options=(0, 100),
         unit="(yr)",
@@ -178,7 +178,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "major_repair_duration",
         "Major Repair Duration",
-        "Duration of major repair works.",
+        "[Duration of major repair works (expressed in months).]",
         "int",
         options=(0, 60),
         unit="(months)",
@@ -196,7 +196,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "bearing_exp_joint_cost",
         "Bearing & Expansion Joint Replacement Cost",
-        "Cost of bearing and expansion joint replacement expressed as a percentage of superstructure cost.",
+        "[Cost incurred due to replacement of bearing and expansion joint, expressed as a percentage of the superstructure cost.]",
         "float",
         options=(0.0, 100.0, 3),
         unit="(%)",
@@ -212,7 +212,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "bearing_exp_joint_freq",
         "Bearing & Expansion Joint Replacement Frequency",
-        "Interval between bearing and expansion joint replacements.",
+        "[Interval between bearing and expansion joint replacements (expressed in years).]",
         "int",
         options=(0, 100),
         unit="(yr)",
@@ -228,7 +228,7 @@ MAINTENANCE_FIELDS = [
     FieldDef(
         "bearing_exp_joint_duration",
         "Bearing & Expansion Joint Replacement Duration",
-        "Duration of bearing and expansion joint replacement works.",
+        "[Duration of bearing and expansion joint replacement works (expressed in days).]",
         "int",
         options=(0, 365),
         unit="(days)",
