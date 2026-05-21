@@ -44,14 +44,17 @@ PROJECT_INFO_FIELDS = [
     FieldDef(
         "project_description",
         "Project Description",
-        "A free-text summary of the project scope, objectives, and context.",
+        "",
         "textarea",
+        placeholder_text="A free-text summary of the project scope, objectives, and context."
+        
     ),
     FieldDef(
         "remarks",
         "Remarks",
-        "Additional notes or observations. Does not affect any calculations.",
+        "",
         "textarea",
+        placeholder_text="Additional notes or observations. Does not affect any calculations."
     ),
 ]
 
@@ -66,7 +69,7 @@ AGENCY_FIELDS = [
     FieldDef(
         "agency_logo",
         "Organization's Logo",
-        "Appears on the report cover page. PNG or JPG recommended.",
+        "[Appears on the report cover page. PNG or JPG recommended.]",
         "upload_img",
         options="default",
     ),
@@ -80,13 +83,13 @@ AGENCY_FIELDS = [
     FieldDef(
         "agency_address",
         "Organization's Address",
-        "Appears in the report footer.",
+        "[Appears in the report footer.]",
         "text",
     ),
     FieldDef(
         "agency_country",
         "Country",
-        "Country where the evaluating agency is based. Used for report localisation.",
+        "[Country where the evaluating agency is based. Used for report localisation.]",
         "combo",
         options=COUNTRIES,
     ),

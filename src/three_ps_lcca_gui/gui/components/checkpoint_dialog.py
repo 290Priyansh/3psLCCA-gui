@@ -53,7 +53,7 @@ class SaveCheckpointDialog(QDialog):
 
         desc = QLabel(
             "A checkpoint is a full snapshot of your current project data. "
-            "You can restore it at any time from the Checkpoint Manager."
+            "You can restore a saved checkpoint at any time from the \"Checkpoint Manager\"."
         )
         desc.setWordWrap(True)
         desc.setFont(_f(FS_SM))

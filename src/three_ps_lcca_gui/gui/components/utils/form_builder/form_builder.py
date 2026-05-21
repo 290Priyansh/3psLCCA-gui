@@ -275,6 +275,8 @@ def build_form(
         if f.field_type == "text":
             widget = QLineEdit()
             widget.setMinimumHeight(30)
+            if f.placeholder_text:
+                widget.setPlaceholderText(f.placeholder_text)
             setattr(host, f.key, host.field(f.key, widget))
             widget.textChanged.connect(lambda _, w=widget: w.setStyleSheet(""))
 
@@ -283,6 +285,8 @@ def build_form(
             widget = QTextEdit()
             widget.setFixedHeight(100)
             widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            if f.placeholder_text:
+                widget.setPlaceholderText(f.placeholder_text)
             setattr(host, f.key, host.field(f.key, widget))
 
         # ── int ───────────────────────────────────────────────────────────

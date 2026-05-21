@@ -94,5 +94,6 @@ class FieldDef:
     warn: tuple | None = None  # (low, high) or (low, high, msg) or (low, high, low_msg, high_msg)
     default: Any = None  # explicit initial value; if None, the widget's lower bound is used
     blocked: bool = False  # permanently read-only regardless of project lock state
+    placeholder_text: str = ""  # hint shown when the field is empty (text / textarea only)
 
 
