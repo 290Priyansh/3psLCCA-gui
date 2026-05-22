@@ -71,7 +71,7 @@ matplotlib.rcParams["font.family"] = FONT_FAMILY
 
 STAGE_COLORS = {
     "Initial":     "#CCCCCC",
-    "Use & Recon": "#00C49A",
+    "Use":         "#00C49A",
     "End-of-Life": "#EA9E9E",
 }
 
@@ -108,9 +108,9 @@ def _build_stage_data(results: dict) -> list:
     """[(label, value_M, color), ...]- one entry per stage."""
     st = compute_all_summaries(results).get("stagewise", {})
     mapping = [
-        ("initial",            "Initial",     STAGE_COLORS["Initial"]),
-        ("use_reconstruction", "Use & Recon", STAGE_COLORS["Use & Recon"]),
-        ("end_of_life",        "End-of-Life", STAGE_COLORS["End-of-Life"]),
+        ("initial",     "Initial",     STAGE_COLORS["Initial"]),
+        ("use",         "Use",         STAGE_COLORS["Use"]),
+        ("end_of_life", "End-of-Life", STAGE_COLORS["End-of-Life"]),
     ]
     return [(label, _M(st.get(key, 0)), color)
             for key, label, color in mapping if st.get(key, 0) != 0]
@@ -131,9 +131,9 @@ def _build_pillar_data(results: dict) -> list:
     """[{"stage": label, "pillars": [(name, value_M), ...]}, ...]- pillar stacked."""
     pw = compute_all_summaries(results).get("pillar_wise", {})
     mapping = [
-        ("initial",            "Initial"),
-        ("use_reconstruction", "Use & Recon"),
-        ("end_of_life",        "End-of-Life"),
+        ("initial",     "Initial"),
+        ("use",         "Use"),
+        ("end_of_life", "End-of-Life"),
     ]
     data = []
     for key, label in mapping:
@@ -427,7 +427,7 @@ class AggregateChartWidget(QWidget):
         text_v.addWidget(title)
 
         desc = QLabel(
-            "A comparative analysis of cumulative project impacts across three core lifecycle phases: Initial Construction, combined Use/Maintenance/Reconstruction, and End-of-Life. This visualization illustrates the proportional split between direct capital investments and long-term externalized liabilities."
+            "A comparative analysis of cumulative project impacts across three core lifecycle phases: Initial Construction, Use/Maintenance, and combined Reconstruction/End-of-Life. This visualization illustrates the proportional split between direct capital investments and long-term externalized liabilities."
         )
         desc.setWordWrap(True)
         desc.setAlignment(Qt.AlignCenter)
@@ -443,9 +443,9 @@ class AggregateChartWidget(QWidget):
         c_use  = get_token("use")
         c_end  = get_token("end")
 
-        v_ini = st.get("initial",            0)
-        v_use = st.get("use_reconstruction", 0)
-        v_end = st.get("end_of_life",        0)
+        v_ini = st.get("initial",     0)
+        v_use = st.get("use",         0)
+        v_end = st.get("end_of_life", 0)
 
         stage_ratio = format_ratio_string(
             [v_ini, v_use, v_end],

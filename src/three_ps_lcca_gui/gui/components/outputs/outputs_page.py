@@ -260,80 +260,67 @@ class _LCCAWorker(QObject):
 
 
 class LCCSummaryCards(QWidget):
-    """Three top-line KPI cards: Total LCCA, Initial Investment, Future Liabilities."""
+    """
+    Three-row KPI layout:
+      Row 1 – Grand Total (full width)
+      Row 2 – Economic / Environmental / Social  (pillar totals)
+      Row 3 – Initial / Use / End-of-Life        (stage totals)
+    """
 
     def __init__(self, results: dict, currency: str, parent=None):
         super().__init__(parent)
         self._results = results
         self._currency = currency
-        self._cards = []
-        self._last_cols = None
         self._setup_ui()
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
     def _setup_ui(self):
-        self._grid = QGridLayout(self)
-        self._grid.setContentsMargins(0, SP3, 0, SP5)
-        self._grid.setSpacing(SP5)
-
-        summary = compute_all_summaries(self._results)
+        summary  = compute_all_summaries(self._results)
         stagewise = summary.get("stagewise", {})
+        pt        = summary.get("pillar_totals", {})
 
-        total_lcca = sum(stagewise.values())
-        initial = stagewise.get("initial", 0)
-        future = stagewise.get("use_reconstruction", 0) + stagewise.get("end_of_life", 0)
+        grand_total = sum(stagewise.values())
 
-        cards_data = [
-            (
-                "Total Life-Cycle Cost (NPV)",
-                total_lcca,
-                get_token("primary"),
-                "Comprehensive total of all life-cycle expenditures discounted to the assessment year.",
-            ),
-            (
-                "Initial Cost",
-                initial,
-                get_token("success"),
-                "Cumulative total of construction, economic, social, and environmental costs incurred during the initial phase.",
-            ),
-            (
-                "Future Cost",
-                future,
-                get_token("warning"),
-                "Cumulative cost expected for maintenance, repairs, replacement and demolition.",
-            ),
-        ]
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, SP3, 0, SP5)
+        outer.setSpacing(SP3)
 
-        for title, val, color, subtitle in cards_data:
-            self._cards.append(self._create_card(title, val, color, subtitle))
+        # ── Row 1: Grand Total ────────────────────────────────────────────
+        outer.addWidget(self._card(
+            "Total Life-Cycle Cost (NPV)", grand_total,
+            get_token("primary"), large=True,
+        ))
 
-        self._rearrange(self.width())
+        # ── Row 2: Pillar totals ──────────────────────────────────────────
+        row2 = QHBoxLayout()
+        row2.setSpacing(SP3)
+        for title, key, token in [
+            ("Economic",      "eco",    "eco"),
+            ("Environmental", "env",    "env"),
+            ("Social",        "social", "soc"),
+        ]:
+            row2.addWidget(self._card(title, pt.get(key, 0), get_token(token)))
+        outer.addLayout(row2)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._rearrange(event.size().width())
+        # ── Row 3: Stage totals ───────────────────────────────────────────
+        row3 = QHBoxLayout()
+        row3.setSpacing(SP3)
+        for title, key, token in [
+            ("Initial",     "initial",     "init"),
+            ("Use",         "use",         "use"),
+            ("End-of-Life", "end_of_life", "end"),
+        ]:
+            row3.addWidget(self._card(title, stagewise.get(key, 0), get_token(token)))
+        outer.addLayout(row3)
 
-    def _rearrange(self, width: int):
-        new_cols = width >= 750
-        if self._last_cols == new_cols:
-            return
-        self._last_cols = new_cols
-        for i in reversed(range(self._grid.count())):
-            self._grid.takeAt(i)
-        if not new_cols:
-            for i, card in enumerate(self._cards):
-                self._grid.addWidget(card, i, 0)
-        else:
-            for i, card in enumerate(self._cards):
-                self._grid.addWidget(card, 0, i)
-
-    def _create_card(self, title: str, value: float, color_hex: str, subtitle: str) -> QFrame:
+    def _card(self, title: str, value: float, accent: str, large: bool = False) -> QFrame:
         card = QFrame()
         card.setObjectName("kpiCard")
         card.setStyleSheet(
             f"#kpiCard {{"
             f"  background-color: {get_token('surface')};"
             f"  border: 1px solid {get_token('surface_mid')};"
+            f"  border-top: 3px solid {accent};"
             f"  border-radius: {RADIUS_LG}px;"
             f"}}"
         )
@@ -343,19 +330,17 @@ class LCCSummaryCards(QWidget):
         v.setSpacing(0)
 
         title_lbl = QLabel(title.upper())
-        title_lbl.setWordWrap(False)
         title_lbl.setFont(_f(FS_SM, FW_MEDIUM))
         title_lbl.setStyleSheet(
             f"color: {get_token('text_secondary')}; letter-spacing: 1px; border: none;"
         )
         v.addWidget(title_lbl)
-        v.addSpacing(SP3)
+        v.addSpacing(SP2)
 
         val_str = fmt_currency(value, self._currency, decimals=0)
         val_lbl = QLabel(val_str)
-        val_lbl.setWordWrap(False)
-        val_lbl.setFont(_f(FS_DISP, FW_BOLD))
-        val_lbl.setStyleSheet(f"color: {color_hex}; border: none;")
+        val_lbl.setFont(_f(FS_DISP if large else FS_XL, FW_BOLD))
+        val_lbl.setStyleSheet(f"color: {accent}; border: none;")
         v.addWidget(val_lbl)
 
         curr_lbl = QLabel(self._currency)
@@ -364,15 +349,8 @@ class LCCSummaryCards(QWidget):
             f"color: {get_token('text_disabled')}; border: none; letter-spacing: 0.5px;"
         )
         v.addWidget(curr_lbl)
-        v.addSpacing(SP3)
 
-        sub_lbl = QLabel(subtitle)
-        sub_lbl.setWordWrap(True)
-        sub_lbl.setFont(_f(FS_MD, FW_NORMAL))
-        sub_lbl.setStyleSheet(f"color: {get_token('text_secondary')}; border: none;")
-        v.addWidget(sub_lbl)
-
-        card.setMinimumHeight(140)
+        card.setMinimumHeight(110 if large else 90)
         return card
 
 
@@ -680,7 +658,7 @@ class OutputsPage(ScrollableForm):
     def _build_ui(self):
         f = self.form
 
-        self._header = QLabel("Outputs")
+        self._header = QLabel("Results")
         self._header.setFont(_f(FS_DISP, FW_BOLD))
         self._header.setStyleSheet(
             f"color: {get_token('text')}; margin-bottom: {SP2}px;"
@@ -1021,7 +999,7 @@ class OutputsPage(ScrollableForm):
         self._status_layout.addWidget(toolbar_row)
 
         sections = [
-            lambda r: _section_heading("At a Glance"),
+            lambda r: _section_heading("Summary"),
             lambda r: LCCSummaryCards(r, currency=self._currency),
             lambda r: _divider(),
             lambda r: _section_heading("Life cycle cost distribution"),
@@ -1070,7 +1048,7 @@ class OutputsPage(ScrollableForm):
         self._pages = {
             n: p
             for n, p in widget_map.items()
-            if n != "Outputs" and hasattr(p, "validate")
+            if n != "Results" and hasattr(p, "validate")
         }
 
     # ── Validation & calculation ──────────────────────────────

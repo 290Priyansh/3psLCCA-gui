@@ -28,8 +28,8 @@ def _stage_totals(stage_data):
 def compute_all_summaries(data):
     """Compute summary views from LCCA result dict.
 
-    NOTE: "use_stage" and "reconstruction" are merged into a single
-    "use_reconstruction" group in all outputs.
+    NOTE: "reconstruction" and "end_of_life" are merged into a single
+    "end_of_life" group in all summary outputs. "use_stage" is reported alone.
     """
 
     # ---- Step 1: Compute per-stage pillar totals ----
@@ -45,20 +45,20 @@ def compute_all_summaries(data):
 
     # 1) Stagewise (Merged)
     stagewise = {
-        "initial":            total_of("initial_stage"),
-        "use_reconstruction": total_of("use_stage") + total_of("reconstruction"),
-        "end_of_life":      total_of("end_of_life"),
+        "initial":     total_of("initial_stage"),
+        "use":         total_of("use_stage"),
+        "end_of_life": total_of("reconstruction") + total_of("end_of_life"),
     }
 
     # 2) Pillar-wise (Merged)
     pillar_wise = {
         "initial": stages["initial_stage"],
-        "use_reconstruction": {
-            "eco":    stages["use_stage"]["eco"]    + stages["reconstruction"]["eco"],
-            "env":    stages["use_stage"]["env"]    + stages["reconstruction"]["env"],
-            "social": stages["use_stage"]["social"] + stages["reconstruction"]["social"],
+        "use": stages["use_stage"],
+        "end_of_life": {
+            "eco":    stages["reconstruction"]["eco"]    + stages["end_of_life"]["eco"],
+            "env":    stages["reconstruction"]["env"]    + stages["end_of_life"]["env"],
+            "social": stages["reconstruction"]["social"] + stages["end_of_life"]["social"],
         },
-        "end_of_life": stages["end_of_life"],
     }
 
     # 3) Pillar totals (lifetime)
@@ -69,9 +69,9 @@ def compute_all_summaries(data):
 
     # 4) Environmental split
     env_split = {
-        "initial":            stages["initial_stage"]["env"],
-        "use_reconstruction": stages["use_stage"]["env"] + stages["reconstruction"]["env"],
-        "end_of_life":        stages["end_of_life"]["env"],
+        "initial":     stages["initial_stage"]["env"],
+        "use":         stages["use_stage"]["env"],
+        "end_of_life": stages["reconstruction"]["env"] + stages["end_of_life"]["env"],
     }
 
     return {

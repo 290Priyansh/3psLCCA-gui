@@ -138,7 +138,7 @@ def _build_pillar_data(results: dict):
 
 def _build_nested_pie_data(results: dict) -> list:
     pw = compute_all_summaries(results).get("pillar_wise", {})
-    mapping = [("initial", "Initial"), ("use_reconstruction", "Use"), ("end_of_life", "End-of-Life")]
+    mapping = [("initial", "Initial"), ("use", "Use"), ("end_of_life", "End-of-Life")]
     data = []
     for key, label in mapping:
         p = pw.get(key, {})

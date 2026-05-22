@@ -252,19 +252,26 @@ class LCCDetailsTable(QWidget):
     def _build_data(self, results: dict):
         rows = []
         grand = [0.0] * 4
-        
+        _recon_vals = None
+
         for stage_label, result_key, cat_keys in STAGE_DEFS:
             totals = stage_totals(results, result_key, cat_keys)
             if not totals: continue
-            
+
             vals = [
                 totals.get("Economic", 0.0),
                 totals.get("Environmental", 0.0),
                 totals.get("Social", 0.0)
             ]
-            total = sum(vals)
-            vals.append(total)
-            
+            vals.append(sum(vals))
+
+            if result_key == "reconstruction":
+                _recon_vals = vals
+                continue
+
+            if result_key == "end_of_life" and _recon_vals is not None:
+                vals = [vals[i] + _recon_vals[i] for i in range(4)]
+
             rows.append((stage_label, result_key, vals))
             for i, v in enumerate(vals):
                 grand[i] += v
@@ -451,7 +458,7 @@ class LCCBreakdownTable(QWidget):
     def _build(self, results: dict):
         row_idx = 0
         _pillar_order = {"economic": 0, "environmental": 1, "social": 2}
-        _use_block_idx = None  # index in _stage_blocks for use_stage
+        _buffered_recon = None  # buffer reconstruction rows to fold into end_of_life
 
         for stage_def in BREAKDOWN_STAGES:
             result_key = stage_def["result_key"]
@@ -477,21 +484,17 @@ class LCCBreakdownTable(QWidget):
             stage_color = self._STAGE_COLORS.get(result_key, stage_def["stage_color"])
 
             if result_key == "reconstruction":
-                # Fold into use_stage block as a sub-section
-                use_color = self._STAGE_COLORS.get("use_stage", stage_color)
-                self._rows.append(("_subheader", "Reconstruction", 0.0, use_color))
-                row_idx += 1
-                for cat, label, value in stage_rows:
-                    self._rows.append((cat, label, value, use_color))
-                    row_idx += 1
-                if _use_block_idx is not None:
-                    self._stage_blocks[_use_block_idx][3] = row_idx - 1
-            else:
+                # Buffer to fold into end_of_life block as a sub-section
+                _buffered_recon = stage_rows
+            elif result_key == "end_of_life":
                 start = row_idx
+                if _buffered_recon is not None:
+                    for cat, label, value in _buffered_recon:
+                        self._rows.append((cat, f"Reconstruction | {label}", value, stage_color))
+                        row_idx += 1
                 for cat, label, value in stage_rows:
                     self._rows.append((cat, label, value, stage_color))
                     row_idx += 1
-                block_idx = len(self._stage_blocks)
                 self._stage_blocks.append([
                     self._stage_labels.get(result_key,
                                            stage_def["label"].replace("\n", " ")),
@@ -500,8 +503,19 @@ class LCCBreakdownTable(QWidget):
                     row_idx - 1,
                     0, 0,  # sy, sh- filled by _calculate_layout
                 ])
-                if result_key == "use_stage":
-                    _use_block_idx = block_idx
+            else:
+                start = row_idx
+                for cat, label, value in stage_rows:
+                    self._rows.append((cat, label, value, stage_color))
+                    row_idx += 1
+                self._stage_blocks.append([
+                    self._stage_labels.get(result_key,
+                                           stage_def["label"].replace("\n", " ")),
+                    stage_color,
+                    start,
+                    row_idx - 1,
+                    0, 0,  # sy, sh- filled by _calculate_layout
+                ])
 
         if self._rows:
             self._max_val = max(
@@ -700,7 +714,7 @@ class LCCBreakdownTable(QWidget):
         x_val, x_bar, bar_w = self._col_x(W)
         item_w = x_val - self._STAGE_W
         _bar_pad  = 3
-        bar_w_max = bar_w - _bar_pad * 2
+        bar_w_max = bar_w - _bar_pad - 5
 
         # ── legend (top) ──────────────────────────────────────────────────────
         legend_y = (self._LEGEND_H - 16) // 2   # vertically center in legend band
@@ -733,7 +747,7 @@ class LCCBreakdownTable(QWidget):
                    f"Value ({self._currency})")
         p.drawText(QRect(x_bar + self._PAD_X, hdr_y,
                          bar_w - self._PAD_X * 2, self._MIN_ROW_H),
-                   Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "Relative Cost")
+                   Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "")
 
         # ── data rows ─────────────────────────────────────────────────────────
         row_font = QFont(FONT_FAMILY, FS_BASE, FW_NORMAL)
