@@ -915,7 +915,7 @@ class OutputsPage(ScrollableForm):
                 )
 
         if not all_errors:
-            run_btn = QPushButton("Proceed with Calculation")
+            run_btn = QPushButton("Run the Life Cycle Cost (LCC) analysis")
             run_btn.setFixedHeight(BTN_LG)
             run_btn.setStyleSheet(btn_primary())
             run_btn.clicked.connect(self._on_proceed)

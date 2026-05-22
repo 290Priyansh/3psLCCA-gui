@@ -306,7 +306,7 @@ class GeneralInfo(ScrollableForm):
     def freeze(self, frozen: bool = True):
         freeze_form(GENERAL_FIELDS, self, frozen)
         freeze_img_uploads(self, GENERAL_FIELDS, frozen)
-        freeze_widgets(frozen, self.btn_clear_all)
+        freeze_widgets(frozen, self.btn_clear_all, self.btn_load_profile)
 
     def clear_validation(self):
         clear_field_styles(GENERAL_FIELDS, self)
@@ -315,8 +315,8 @@ class GeneralInfo(ScrollableForm):
         return validate_form(GENERAL_FIELDS, self)
 
     _UNIT_SYSTEM_LABELS = {
-        "metric":   "Metric SI",
-        "imperial": "Imperial (English)",
+        "metric":   "Metric",
+        "imperial": "Imperial",
     }
 
     def load_data_dict(self, data: dict):

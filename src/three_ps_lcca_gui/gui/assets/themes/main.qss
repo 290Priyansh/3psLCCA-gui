@@ -257,6 +257,10 @@ QComboBox:disabled {
     border-color: $border;
 }
 
+QComboBox[frozen="true"] {
+    color: $text_disabled;
+}
+
 QComboBox[validationState="error"] {
     border: 1px solid $danger;
 }

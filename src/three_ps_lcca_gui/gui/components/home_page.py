@@ -1152,8 +1152,8 @@ class HomePage(QWidget):
         saved_sort = sm.get_pref("sort_order") or "recent"
         for label, key in [
             ("Recent", "recent"),
-            ("Name", "name"),
-            ("Pinned", "pinned"),
+            ("All", "name"),
+            ("Starred", "pinned"),
             ("Compare", "compare"),
         ]:
             btn = QPushButton(label)
@@ -1531,10 +1531,10 @@ class HomePage(QWidget):
             self.grid_section_lbl.setText("READY TO COMPARE")
         elif sort_key == "pinned":
             projects = [p for p in projects if p.get("pinned")]
-            self.grid_section_lbl.setText("PINNED PROJECTS")
+            self.grid_section_lbl.setText("STARRED PROJECTS")
         elif sort_key == "name":
             projects.sort(key=lambda p: (p.get("display_name") or "").lower())
-            self.grid_section_lbl.setText("ALL PROJECTS - A–Z")
+            self.grid_section_lbl.setText("ALL PROJECTS - A-Z")
         else:
             def get_latest_time(p):
                 t1 = p.get("last_opened_at") or ""

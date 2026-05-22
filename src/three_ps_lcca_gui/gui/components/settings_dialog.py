@@ -64,10 +64,10 @@ class SettingsPanel(QWidget):
 
         # ── Display Name ──────────────────────────────────────────────────
         layout.addWidget(QLabel("<b>Display Name</b>"))
-        name_hint = QLabel("Shown in reports and exports.")
-        name_hint.setEnabled(False)
-        name_hint.setFont(font(FS_SM))
-        layout.addWidget(name_hint)
+        # name_hint = QLabel("Shown in reports and exports.")
+        # name_hint.setEnabled(False)
+        # name_hint.setFont(font(FS_SM))
+        # layout.addWidget(name_hint)
 
         self._name_edit = QLineEdit()
         self._name_edit.setPlaceholderText("Enter your name…")
@@ -313,7 +313,11 @@ class SettingsDialog(QDialog):
         gen_layout.setContentsMargins(24, 24, 24, 24)
         
         self._panel = SettingsPanel(self)
-        gen_layout.addWidget(self._panel)
+        gen_scroll = QScrollArea()
+        gen_scroll.setWidgetResizable(True)
+        gen_scroll.setFrameShape(QFrame.NoFrame)
+        gen_scroll.setWidget(self._panel)
+        gen_layout.addWidget(gen_scroll)
         self.tabs.addTab(self.gen_tab, "General")
 
         # ── Tab 2: Profiles ─────────────────────────────────────────────
@@ -359,10 +363,12 @@ class SettingsDialog(QDialog):
 
         self.tabs.addTab(self.prof_tab, "Profiles")
         
-        layout.addWidget(self.tabs)
+        layout.addWidget(self.tabs, stretch=1)
 
         # ── Action Buttons ────────────────────────────────────────────────
         btn_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btn_box.button(QDialogButtonBox.Save).setStyleSheet(f"color: {get_token('base')};")
+        btn_box.button(QDialogButtonBox.Cancel).setStyleSheet(f"color: {get_token('text')};")
         btn_box.accepted.connect(self._on_accept)
         btn_box.rejected.connect(self.reject)
         layout.addWidget(btn_box)

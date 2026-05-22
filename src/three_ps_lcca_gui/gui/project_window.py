@@ -402,7 +402,7 @@ class ProjectWindow(QMainWindow):
 
         self.menuFile.addSeparator()
 
-        self.actionSave = QAction("Save Now", self)
+        self.actionSave = QAction("Save", self)
         self.actionSave.triggered.connect(self._save_now)
         self.menuFile.addAction(self.actionSave)
 
@@ -412,7 +412,7 @@ class ProjectWindow(QMainWindow):
         action_rename.triggered.connect(self._rename_project)
         self.menuFile.addAction(action_rename)
 
-        action_export = QAction("Export...", self)
+        action_export = QAction("Share", self)
         action_export.triggered.connect(self._export_project)
         self.menuFile.addAction(action_export)
 
