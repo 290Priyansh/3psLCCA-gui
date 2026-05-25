@@ -53,7 +53,7 @@ from three_ps_lcca_gui.gui.components.utils.display_format import fmt_currency
 from ..helper_functions.lifecycle_summary import compute_all_summaries
 from ..helper_functions.ratio_helper import format_ratio_string
 from ..helper_functions.lcc_colors import COLORS as LCC_COLORS
-from .AggregateChart import StageBarPlotter, _build_pillar_total_data
+from .AggregateChart import StageBarPlotter, _build_pillar_total_data, _scale, _unit, _divisor
 
 # ── Register Ubuntu fonts ────────────────────────────────────────────────────
 _UBUNTU_FONT_DIR = os.path.abspath(
@@ -116,8 +116,6 @@ class WheelForwarder(QObject):
 # DATA & CHART HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _M(x): return float(x) / 1_000_000
-
 def _pillar_totals_ok(results: dict) -> bool:
     pt = compute_all_summaries(results).get("pillar_totals", {})
     return all(v >= 0 for v in pt.values())
@@ -126,16 +124,16 @@ def _nested_data_ok(results: dict) -> bool:
     pw = compute_all_summaries(results).get("pillar_wise", {})
     return all(v >= 0 for stage in pw.values() for v in stage.values())
 
-def _build_pillar_data(results: dict):
+def _build_pillar_data(results: dict, currency: str = "INR"):
     pt = compute_all_summaries(results).get("pillar_totals", {})
     rows = [
         ("Economic",      pt.get("eco",    0), COLORS["pillars"]["Economic"]),
         ("Environmental", pt.get("env",    0), COLORS["pillars"]["Environmental"]),
         ("Social",        pt.get("social", 0), COLORS["pillars"]["Social"]),
     ]
-    return [(l, _M(v), c) for l, v, c in rows if v > 0]
+    return [(l, _scale(v, currency), c) for l, v, c in rows if v > 0]
 
-def _build_nested_pie_data(results: dict) -> list:
+def _build_nested_pie_data(results: dict, currency: str = "INR") -> list:
     pw = compute_all_summaries(results).get("pillar_wise", {})
     mapping = [("initial", "Initial"), ("use", "Use"), ("end_of_life", "End-of-Life")]
     data = []
@@ -145,9 +143,9 @@ def _build_nested_pie_data(results: dict) -> list:
         data.append({
             "stage": label,
             "pillars": [
-                ("Economic",      _M(p.get("eco",    0)), COLORS["pillars"]["Economic"]),
-                ("Environmental", _M(p.get("env",    0)), COLORS["pillars"]["Environmental"]),
-                ("Social",        _M(p.get("social", 0)), COLORS["pillars"]["Social"]),
+                ("Economic",      _scale(p.get("eco",    0), currency), COLORS["pillars"]["Economic"]),
+                ("Environmental", _scale(p.get("env",    0), currency), COLORS["pillars"]["Environmental"]),
+                ("Social",        _scale(p.get("social", 0), currency), COLORS["pillars"]["Social"]),
             ],
         })
     return data
@@ -161,12 +159,11 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
     """
     entries = []
     for i, p in enumerate(wedges):
-        if p.theta2 - p.theta1 <= 0.5:
-            continue
         angle = (p.theta2 + p.theta1) / 2.0
         rad = np.deg2rad(angle)
         cx, cy = np.cos(rad), np.sin(rad)
         entries.append({
+            "idx": i,
             "cx": cx, "cy": cy,
             "x0": cx * p.r, "y0": cy * p.r,
             "y_nat": cy * leader_radius,
@@ -174,12 +171,13 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
         })
 
     if not entries:
-        return
+        return {}
 
-    MIN_GAP = 0.22  # vertical clearance between two-line label centres
+    artists = {}  # wedge_index → [matplotlib artists]
+
+    MIN_GAP = 0.22
 
     def _resolve(group):
-        """Push labels apart until no two centres are closer than MIN_GAP."""
         group = sorted(group, key=lambda e: -e["y_nat"])
         ys = [e["y_nat"] for e in group]
         for _ in range(300):
@@ -198,32 +196,34 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
     def _draw(group, ys, ha, x_col):
         tick = 0.05 if ha == "left" else -0.05
         for e, y_lbl in zip(group, ys):
-            # Two-segment leader: slice edge → natural elbow → adjusted label column
-            ax.plot(
+            line, = ax.plot(
                 [e["x0"], e["cx"] * leader_radius, x_col],
                 [e["y0"], e["y_nat"],               y_lbl],
                 color=line_color, lw=0.8, alpha=0.9,
                 solid_capstyle="round", zorder=9, clip_on=False,
             )
-            ax.plot(e["x0"], e["y0"], "o", color=line_color,
+            dot, = ax.plot(e["x0"], e["y0"], "o", color=line_color,
                     markersize=2.5, alpha=0.9, zorder=10, clip_on=False)
 
             parts = e["label"].split("\n", 1)
             name  = parts[0]
             value = parts[1] if len(parts) > 1 else ""
             x_txt = x_col + tick
+            entry_artists = [line, dot]
 
             if value:
-                ax.text(x_txt, y_lbl + 0.065, name, ha=ha, va="center",
+                entry_artists.append(ax.text(x_txt, y_lbl + 0.065, name, ha=ha, va="center",
                         color=text_color, fontsize=7.5, fontweight="bold",
-                        clip_on=False, zorder=11)
-                ax.text(x_txt, y_lbl - 0.065, value, ha=ha, va="center",
+                        clip_on=False, zorder=11))
+                entry_artists.append(ax.text(x_txt, y_lbl - 0.065, value, ha=ha, va="center",
                         color=text_color, fontsize=6.5, alpha=0.65,
-                        clip_on=False, zorder=11)
+                        clip_on=False, zorder=11))
             else:
-                ax.text(x_txt, y_lbl, name, ha=ha, va="center",
+                entry_artists.append(ax.text(x_txt, y_lbl, name, ha=ha, va="center",
                         color=text_color, fontsize=7.5, fontweight="bold",
-                        clip_on=False, zorder=11)
+                        clip_on=False, zorder=11))
+
+            artists[e["idx"]] = entry_artists
 
     right = [e for e in entries if e["cx"] >= 0]
     left  = [e for e in entries if e["cx"] <  0]
@@ -235,6 +235,8 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
     if left:
         g, ys = _resolve(left)
         _draw(g, ys, "right", -x_col)
+
+    return artists
 
 def _add_inner_band_labels(ax, wedges, labels, text_color):
     """Stage names rendered inside the inner donut band — no leader lines needed."""
@@ -258,24 +260,63 @@ def _add_inner_band_labels(ax, wedges, labels, text_color):
 
 class SimplePillarPlotter:
     def __init__(self, results: dict, currency: str = "INR"):
-        items = _build_pillar_data(results)
+        items = _build_pillar_data(results, currency)
         self.labels, self.values, self.colors = [i[0] for i in items], [i[1] for i in items], [i[2] for i in items]
         self.total, self.currency, self.mode = sum(self.values), currency, "Value"
-        
-        # Original layout size
+        self._center_text  = None
+        self._base_radius  = 1.05
+
         self.fig = Figure(figsize=(7, 6))
         self.fig.patch.set_alpha(0.0)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("none")
         self.fig.subplots_adjust(left=0.02, right=0.98, bottom=0.12, top=0.98)
+        self.fig.canvas.mpl_connect("motion_notify_event", self._hover)
 
     def _fmt(self, val: float) -> str:
         if self.mode == "Percentage": return f"{val / (self.total or 1) * 100:.1f}%"
-        return f"{fmt_currency(val, self.currency, decimals=2)} M {self.currency}"
+        return fmt_currency(val * _divisor(self.currency), self.currency, decimals=0, style="short")
+
+    def _hover(self, event):
+        if not hasattr(self, "wedges") or not self.wedges:
+            return
+        if event.inaxes != self.ax:
+            for w in self.wedges:
+                w.set_radius(self._base_radius)
+                w.set_alpha(1.0)
+            self._set_legend_alpha(-1)
+            if hasattr(self, "_label_artists"):
+                for artists in self._label_artists.values():
+                    for a in artists: a.set_visible(True)
+        else:
+            hit = next((i for i, w in enumerate(self.wedges) if w.contains(event)[0]), -1)
+            for i, w in enumerate(self.wedges):
+                if hit == -1 or i == hit:
+                    w.set_radius(self._base_radius * 1.06 if i == hit else self._base_radius)
+                    w.set_alpha(1.0)
+                else:
+                    w.set_radius(self._base_radius)
+                    w.set_alpha(0.25)
+            self._set_legend_alpha(hit)
+            if hasattr(self, "_label_artists"):
+                for i, artists in self._label_artists.items():
+                    visible = (hit == -1 or i == hit)
+                    for a in artists: a.set_visible(visible)
+        self.fig.canvas.draw_idle()
+
+    def _set_legend_alpha(self, hit: int):
+        leg = self.ax.get_legend()
+        if not leg:
+            return
+        for i, (handle, text) in enumerate(zip(leg.legend_handles, leg.get_texts())):
+            a = 1.0 if hit == -1 or i == hit else 0.25
+            handle.set_alpha(a)
+            text.set_alpha(a)
 
     def set_mode(self, is_percentage: bool):
         self.mode = "Percentage" if is_percentage else "Value"
         self.ax.clear()
+        self._center_text = None
         self.setup_plot()
         self.fig.canvas.draw_idle()
 
@@ -287,18 +328,16 @@ class SimplePillarPlotter:
             self.ax.axis("off")
             return self.fig
 
-        # Original radius restored
         self.wedges, _ = self.ax.pie(self.values, radius=1.05, colors=self.colors, wedgeprops=_WEDGE_SIMP)
-        
-        display_labels = [f"{l}\n{self._fmt(v)}" for l, v in zip(self.labels, self.values)]
-        _add_smart_labels(self.ax, self.wedges, display_labels, tc, lc, threshold=15.0, leader_radius=1.25)
 
-        self.ax.text(0, 0, f"TOTAL\n{self._fmt(self.total)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
-        
-        # Original Legend
+        display_labels = [f"{l}\n{self._fmt(v)}" for l, v in zip(self.labels, self.values)]
+        self._label_artists = _add_smart_labels(self.ax, self.wedges, display_labels, tc, lc, threshold=15.0, leader_radius=1.25)
+
+        self._center_text = self.ax.text(0, 0, f"Total\n{self._fmt(self.total)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
+
         legend_els = [Patch(facecolor=c, label=l) for l, c in zip(self.labels, self.colors)]
         self.ax.legend(handles=legend_els, loc="upper center", bbox_to_anchor=(0.5, -0.05), ncol=3, frameon=False, fontsize=8, labelcolor=tc)
-        
+
         self.ax.axis("off")
         self.ax.set_xlim(-1.85, 1.85)
         self.ax.set_ylim(-1.85, 1.85)
@@ -311,33 +350,149 @@ class SimplePillarPlotter:
 class SustainabilityCircularPlotter:
     def __init__(self, data: list, currency: str = "INR"):
         self.data, self.currency, self.mode = data, currency, "Value"
-        
-        # Original layout size
+        self._center_text       = None
+        self._base_inner_radius = 0.8
+        self._base_outer_radius = 1.1
+
         self.fig = Figure(figsize=(7, 6))
         self.fig.patch.set_alpha(0.0)
         self.ax = self.fig.add_subplot(111)
         self.ax.set_facecolor("none")
         self.fig.subplots_adjust(left=0.02, right=0.98, bottom=0.12, top=0.98)
+        self.fig.canvas.mpl_connect("motion_notify_event", self._hover)
         self._prepare_data()
 
     def _prepare_data(self):
         self.total_value = sum(sum(p[1] for p in e["pillars"]) for e in self.data)
         self.inner_vals, self.inner_colors, self.inner_labels = [], [], []
         self.outer_vals, self.outer_colors, self.outer_labels = [], [], []
+        self._stage_to_outer: dict[str, list[int]] = {}
         for entry in self.data:
             self.inner_vals.append(sum(p[1] for p in entry["pillars"]))
             self.inner_labels.append(entry["stage"])
             self.inner_colors.append(COLORS["stages"].get(entry["stage"], "#DDDDDD"))
             for name, val, color in entry["pillars"]:
+                j = len(self.outer_vals)
+                self._stage_to_outer.setdefault(entry["stage"], []).append(j)
                 self.outer_vals.append(val); self.outer_labels.append(f"{entry['stage']} - {name}"); self.outer_colors.append(color)
 
     def _fmt(self, val: float) -> str:
         if self.mode == "Percentage": return f"{val / (self.total_value or 1) * 100:.1f}%"
-        return f"{fmt_currency(val, self.currency, decimals=2)} M {self.currency}"
+        return fmt_currency(val * _divisor(self.currency), self.currency, decimals=0, style="short")
+
+    def _hover(self, event):
+        if not hasattr(self, "outer_wedges") or not self.outer_wedges:
+            return
+        if event.inaxes != self.ax:
+            for w in self.inner_wedges:
+                w.set_radius(self._base_inner_radius)
+                w.set_alpha(1.0)
+            for w in self.outer_wedges:
+                w.set_radius(self._base_outer_radius)
+                w.set_alpha(1.0)
+            self._set_legend_alpha(-1, -1)
+            if self._center_text:
+                self._center_text.set_text(f"Total\n{self._fmt(self.total_value)}")
+            if hasattr(self, "_label_artists"):
+                for artists in self._label_artists.values():
+                    for a in artists: a.set_visible(True)
+        else:
+            # Wedge.contains() doesn't respect the annular hole, so determine
+            # which ring the cursor is in via radial distance first.
+            r = np.hypot(event.xdata or 0.0, event.ydata or 0.0)
+            r_outer_min = self._base_outer_radius - 0.30  # _WEDGE width = 0.30
+            r_inner_min = self._base_inner_radius - 0.30
+
+            if r >= r_outer_min:
+                hit_outer = next((i for i, w in enumerate(self.outer_wedges) if w.contains(event)[0]), -1)
+                hit_inner = -1
+            elif r >= r_inner_min:
+                hit_inner = next((i for i, w in enumerate(self.inner_wedges) if w.contains(event)[0]), -1)
+                hit_outer = -1
+            else:
+                hit_outer = hit_inner = -1
+
+            # Inner ring
+            for i, w in enumerate(self.inner_wedges):
+                if hit_outer >= 0:
+                    w.set_radius(self._base_inner_radius)
+                    w.set_alpha(0.25)
+                elif hit_inner == -1 or i == hit_inner:
+                    w.set_radius(self._base_inner_radius * 1.06 if i == hit_inner else self._base_inner_radius)
+                    w.set_alpha(1.0)
+                else:
+                    w.set_radius(self._base_inner_radius)
+                    w.set_alpha(0.25)
+
+            # Outer ring
+            if hit_inner >= 0:
+                stage_outer = set(self._stage_to_outer.get(self.inner_labels[hit_inner], []))
+                for i, w in enumerate(self.outer_wedges):
+                    if i in stage_outer:
+                        w.set_radius(self._base_outer_radius * 1.06)
+                        w.set_alpha(1.0)
+                    else:
+                        w.set_radius(self._base_outer_radius)
+                        w.set_alpha(0.25)
+            else:
+                for i, w in enumerate(self.outer_wedges):
+                    if hit_outer == -1 or i == hit_outer:
+                        w.set_radius(self._base_outer_radius * 1.06 if i == hit_outer else self._base_outer_radius)
+                        w.set_alpha(1.0)
+                    else:
+                        w.set_radius(self._base_outer_radius)
+                        w.set_alpha(0.25)
+
+            self._set_legend_alpha(hit_outer, hit_inner)
+
+            if self._center_text:
+                if hit_inner >= 0:
+                    self._center_text.set_text(
+                        f"{self.inner_labels[hit_inner]}\n{self._fmt(self.inner_vals[hit_inner])}"
+                    )
+                else:
+                    self._center_text.set_text(f"Total\n{self._fmt(self.total_value)}")
+
+            if hasattr(self, "_label_artists"):
+                if hit_inner >= 0:
+                    stage_outer = set(self._stage_to_outer.get(self.inner_labels[hit_inner], []))
+                    for i, artists in self._label_artists.items():
+                        for a in artists: a.set_visible(i in stage_outer)
+                else:
+                    for i, artists in self._label_artists.items():
+                        visible = (hit_outer == -1 or i == hit_outer)
+                        for a in artists: a.set_visible(visible)
+        self.fig.canvas.draw_idle()
+
+    def _set_legend_alpha(self, hit_outer: int, hit_inner: int = -1):
+        leg = self.ax.get_legend()
+        if not leg:
+            return
+        handles, texts = leg.legend_handles, leg.get_texts()
+        n_stages = len(self.inner_labels)
+        for i, (handle, text) in enumerate(zip(handles, texts)):
+            if hit_outer == -1 and hit_inner == -1:
+                a = 1.0
+            elif hit_outer >= 0:
+                # Outer hover: dim pillar entries that don't match, keep stages visible
+                if i < n_stages:
+                    a = 1.0
+                else:
+                    hit_pillar = self.outer_labels[hit_outer].split(" - ")[1]
+                    a = 1.0 if text.get_text() == hit_pillar else 0.25
+            else:
+                # Inner hover: dim stage entries that don't match, keep pillars visible
+                if i < n_stages:
+                    a = 1.0 if i == hit_inner else 0.25
+                else:
+                    a = 1.0
+            handle.set_alpha(a)
+            text.set_alpha(a)
 
     def set_mode(self, is_percentage: bool):
         self.mode = "Percentage" if is_percentage else "Value"
         self.ax.clear()
+        self._center_text = None
         self.setup_plot()
         self.fig.canvas.draw_idle()
 
@@ -345,19 +500,12 @@ class SustainabilityCircularPlotter:
         tc, sep = get_token("text"), get_token("surface_mid")
         self.ax.set(aspect="equal")
 
-        self.inner_wedges, _ = self.ax.pie(self.inner_vals, radius=0.8, colors=self.inner_colors, wedgeprops=_WEDGE)
-        self.outer_wedges, _ = self.ax.pie(self.outer_vals, radius=1.1, colors=self.outer_colors, wedgeprops=_WEDGE)
+        self.inner_wedges, _ = self.ax.pie(self.inner_vals, radius=self._base_inner_radius, colors=self.inner_colors, wedgeprops=_WEDGE)
+        self.outer_wedges, _ = self.ax.pie(self.outer_vals, radius=self._base_outer_radius, colors=self.outer_colors, wedgeprops=_WEDGE)
 
-        outer_disp = []
-        for l, v in zip(self.outer_labels, self.outer_vals):
-            stage, pillar = l.split(" - ", 1)
-            outer_disp.append(f"{stage} | {pillar}\n{self._fmt(v)}")
+        outer_disp = [f"{l.split(' - ')[1]}\n{self._fmt(v)}" for l, v in zip(self.outer_labels, self.outer_vals)]
+        self._label_artists = _add_smart_labels(self.ax, self.outer_wedges, outer_disp, tc, sep, threshold=15.0, leader_radius=1.45)
 
-        # Inner ring: no text — stage is already encoded in each outer label
-        # Outer ring: "Init | Eco / value" elbow labels, well clear of the outer edge
-        _add_smart_labels(self.ax, self.outer_wedges, outer_disp, tc, sep, threshold=15.0, leader_radius=1.45)
-
-        # Original connecting lines restored
         if self.total_value > 0:
             angles = np.cumsum(self.inner_vals) / self.total_value * 2 * np.pi
             for angle in angles:
@@ -365,13 +513,12 @@ class SustainabilityCircularPlotter:
                 y = [0.5 * np.sin(angle), 1.1 * np.sin(angle)]
                 self.ax.plot(x, y, color=sep, lw=1.5, alpha=0.5)
 
-        self.ax.text(0, 0, f"TOTAL\n{self._fmt(self.total_value)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
-        
-        # Original Legend
+        self._center_text = self.ax.text(0, 0, f"Total\n{self._fmt(self.total_value)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
+
         legend_els = [Patch(facecolor=COLORS["stages"].get(l, "#AAA"), label=l) for l in self.inner_labels]
         legend_els += [Patch(facecolor=c, label=l) for l, c in COLORS["pillars"].items()]
         self.ax.legend(handles=legend_els, loc="upper center", bbox_to_anchor=(0.5, -0.05), ncol=3, frameon=False, fontsize=8, labelcolor=tc)
-        
+
         self.ax.axis("off")
         self.ax.set_xlim(-2.1, 2.1)
         self.ax.set_ylim(-2.1, 2.1)
@@ -531,7 +678,7 @@ class LCCPieWidget(QWidget):
             self._plotters.append(p0)
 
             if _nested_ok:
-                data1 = _build_nested_pie_data(self._results)
+                data1 = _build_nested_pie_data(self._results, self._currency)
                 if data1:
                     p1 = SustainabilityCircularPlotter(data1, currency=self._currency)
                     c1 = FigureCanvasQTAgg(p1.setup_plot())

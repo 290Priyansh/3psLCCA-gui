@@ -101,34 +101,41 @@ class WheelForwarder(QObject):
 # DATA HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _M(x): return float(x) / 1_000_000
+def _divisor(currency: str) -> int:
+    return 1_00_00_000 if currency == "INR" else 1_000_000
+
+def _scale(x: float, currency: str) -> float:
+    return float(x) / _divisor(currency)
+
+def _unit(currency: str) -> str:
+    return "Crore" if currency == "INR" else "Million"
 
 
 def _build_stage_data(results: dict) -> list:
-    """[(label, value_M, color), ...]- one entry per stage."""
+    """[(label, raw_value, color), ...]- one entry per stage."""
     st = compute_all_summaries(results).get("stagewise", {})
     mapping = [
         ("initial",     "Initial",     STAGE_COLORS["Initial"]),
         ("use",         "Use",         STAGE_COLORS["Use"]),
         ("end_of_life", "End-of-Life", STAGE_COLORS["End-of-Life"]),
     ]
-    return [(label, _M(st.get(key, 0)), color)
+    return [(label, st.get(key, 0), color)
             for key, label, color in mapping if st.get(key, 0) != 0]
 
 
 def _build_pillar_total_data(results: dict) -> list:
-    """[(label, value_M, color), ...]- one bar per pillar total (negatives included)."""
+    """[(label, raw_value, color), ...]- one bar per pillar total (negatives included)."""
     pt = compute_all_summaries(results).get("pillar_totals", {})
     rows = [
         ("Economic",      pt.get("eco",    0), PILLAR_COLORS["Economic"]),
         ("Environmental", pt.get("env",    0), PILLAR_COLORS["Environmental"]),
         ("Social",        pt.get("social", 0), PILLAR_COLORS["Social"]),
     ]
-    return [(l, _M(v), c) for l, v, c in rows if v != 0]
+    return [(l, v, c) for l, v, c in rows if v != 0]
 
 
 def _build_pillar_data(results: dict) -> list:
-    """[{"stage": label, "pillars": [(name, value_M), ...]}, ...]- pillar stacked."""
+    """[{"stage": label, "pillars": [(name, raw_value), ...]}, ...]- pillar stacked."""
     pw = compute_all_summaries(results).get("pillar_wise", {})
     mapping = [
         ("initial",     "Initial"),
@@ -143,9 +150,9 @@ def _build_pillar_data(results: dict) -> list:
         data.append({
             "stage": label,
             "pillars": [
-                ("Economic",      _M(p.get("eco",    0))),
-                ("Environmental", _M(p.get("env",    0))),
-                ("Social",        _M(p.get("social", 0))),
+                ("Economic",      p.get("eco",    0)),
+                ("Environmental", p.get("env",    0)),
+                ("Social",        p.get("social", 0)),
             ],
         })
     return data
@@ -224,9 +231,10 @@ class _BasePlotter:
 class StageBarPlotter(_BasePlotter):
     def __init__(self, data: list, currency: str = "INR"):
         super().__init__(currency)
-        self.labels = [d[0] for d in data]
-        self.values = [d[1] for d in data]
-        self.colors = [d[2] for d in data]
+        self.labels     = [d[0] for d in data]
+        self.raw_values = [d[1] for d in data]
+        self.values     = [_scale(v, currency) for v in self.raw_values]
+        self.colors     = [d[2] for d in data]
         self._fancy: list = []
 
     def _hover(self, event):
@@ -235,11 +243,10 @@ class StageBarPlotter(_BasePlotter):
         found = False
         for i, fp in enumerate(self._fancy):
             if fp is not None and fp.contains(event)[0]:
-                val = self.values[i]
                 self.annot.set_text(
                     f"{self.labels[i]}\n"
-                    f"{fmt_currency(val, self.currency, decimals=2)} Million\n"
-                    f"Actual: {self.currency} {fmt_currency(val * 1_000_000, self.currency, decimals=0)}"
+                    f"{self.values[i]:.2f} {_unit(self.currency)}\n"
+                    f"Actual: {self.currency} {fmt_currency(self.raw_values[i], self.currency, decimals=0, style='short')}"
                 )
                 self.annot.xy = (event.xdata, event.ydata)
                 self.annot.set_visible(True)
@@ -260,17 +267,18 @@ class StageBarPlotter(_BasePlotter):
         max_v = max(self.values) if self.values else 1.0
         min_v = min(self.values) if self.values else 0.0
         pad   = (max_v - min_v) * 0.12 or 1.0
-        for i, val in enumerate(self.values):
+        for i, raw in enumerate(self.raw_values):
+            val = self.values[i]
             if val > 0:
                 self.ax.text(x[i], val + pad * 0.18,
-                    f"{fmt_currency(val, self.currency, decimals=2)}",
+                    fmt_currency(raw, self.currency, decimals=0, style="short"),
                     ha="center", va="bottom", fontsize=8, fontweight="bold", color=tc)
             elif val < 0:
                 self.ax.text(x[i], val - pad * 0.18,
-                    f"{fmt_currency(val, self.currency, decimals=2)}",
+                    fmt_currency(raw, self.currency, decimals=0, style="short"),
                     ha="center", va="top", fontsize=8, fontweight="bold", color=tc)
 
-        self._setup_axes_style(tc, gc, x, self.labels, f"Total Cost (Million {self.currency})")
+        self._setup_axes_style(tc, gc, x, self.labels, f"Total Cost ({_unit(self.currency)} {self.currency})")
         if self.values:
             self.ax.set_ylim(min(0, min_v) - pad, max(0, max_v) + pad)
 
@@ -293,8 +301,12 @@ class SustainabilityBarPlotter(_BasePlotter):
         self.data       = data
         self.stages     = [d["stage"] for d in data]
         self.categories = ["Economic", "Environmental", "Social"]
-        self.values     = {
+        self.raw_values = {
             cat: [next((p[1] for p in d["pillars"] if p[0] == cat), 0) for d in data]
+            for cat in self.categories
+        }
+        self.values = {
+            cat: [_scale(v, currency) for v in self.raw_values[cat]]
             for cat in self.categories
         }
 
@@ -310,11 +322,12 @@ class SustainabilityBarPlotter(_BasePlotter):
                         x_pos     = patch.get_x() + patch.get_width() / 2
                         stage_idx = int(round(x_pos / 0.75))
                         if 0 <= stage_idx < len(self.stages):
+                            raw = self.raw_values[cat][stage_idx]
                             val = self.values[cat][stage_idx]
                             self.annot.set_text(
                                 f"{self.stages[stage_idx]}\n"
-                                f"{cat}: {fmt_currency(val, self.currency, decimals=2)} Million\n"
-                                f"Actual: {self.currency} {fmt_currency(val * 1_000_000, self.currency, decimals=0)}"
+                                f"{cat}: {val:.2f} {_unit(self.currency)}\n"
+                                f"Actual: {self.currency} {fmt_currency(raw, self.currency, decimals=0, style='short')}"
                             )
                             self.annot.xy = (event.xdata, event.ydata)
                             self.annot.set_visible(True)
@@ -353,17 +366,18 @@ class SustainabilityBarPlotter(_BasePlotter):
         y_max = max(pos_bottom) if pos_bottom.any() else 0.0
         y_min = min(neg_bottom) if neg_bottom.any() else 0.0
         pad   = (y_max - y_min) * 0.12 or 1.0
+        div   = _divisor(self.currency)
         for i in range(len(self.stages)):
             if pos_bottom[i] > 0:
                 self.ax.text(x[i], pos_bottom[i] + pad * 0.18,
-                    f"{fmt_currency(pos_bottom[i], self.currency, decimals=2)}",
+                    fmt_currency(pos_bottom[i] * div, self.currency, decimals=0, style="short"),
                     ha="center", va="bottom", fontsize=8, fontweight="bold", color=tc)
             if neg_bottom[i] < 0:
                 self.ax.text(x[i], neg_bottom[i] - pad * 0.18,
-                    f"{fmt_currency(neg_bottom[i], self.currency, decimals=2)}",
+                    fmt_currency(neg_bottom[i] * div, self.currency, decimals=0, style="short"),
                     ha="center", va="top", fontsize=8, fontweight="bold", color=tc)
 
-        self._setup_axes_style(tc, gc, x, self.stages, f"Total Cost (Million {self.currency})")
+        self._setup_axes_style(tc, gc, x, self.stages, f"Total Cost ({_unit(self.currency)} {self.currency})")
         self.ax.set_ylim(min(0, y_min) - pad, max(0, y_max) + pad)
 
         self._setup_spines(tc)

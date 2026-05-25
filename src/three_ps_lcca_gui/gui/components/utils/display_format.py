@@ -2,175 +2,221 @@
 gui/components/utils/display_format.py
 
 Global numeric display formatting for 3psLCCA.
-
-Change DECIMAL_PLACES once here - it propagates to every table cell,
-result label, formula preview, and input field across the app.
+Change DECIMAL_PLACES to propagate to every formatted value in the app.
 """
-
-import math
 
 DECIMAL_PLACES: int = 2
 
-# ── Shared constants ──────────────────────────────────────────────────────────
+# ── Unit tables ───────────────────────────────────────────────────────────────
 
-_INDIA_THRESHOLDS = [
-    (1_00_00_00_00_000, "kharab"),   # 10^11  (100 arab)
-    (1_00_00_00_000,    "arab"),     # 10^9   (100 crore)
-    (1_00_00_000,       "crore"),    # 10^7
-    (1_00_000,          "lakh"),     # 10^5
-    (1_000,             "thousand"), # 10^3
+_INDIA_UNITS = [
+    #  threshold       divisor        full      short
+    (1_00_00_000,  1_00_00_000,   "crore",  "Cr"),  # 10^7
+    (1_00_000,     1_00_000,      "lakh",   "L"),   # 10^5
 ]
 
-_UNIT_DIVISORS = {
-    "thousand": 1_000,
-    "lakh":     1_00_000,
-    "million":  1_000_000,
-    "crore":    1_00_00_000,
-    "billion":  1_000_000_000,
-    "arab":     1_00_00_00_000,
-    "trillion": 1_000_000_000_000,
-    "kharab":   1_00_00_00_00_000,
-}
-
-_WESTERN_SUFFIXES = [
-    "", "thousand", "million", "billion", "trillion",
-    "quadrillion", "quintillion", "sextillion",
-    "septillion", "octillion", "nonillion", "decillion",
+_WESTERN_UNITS = [
+    #  threshold       divisor            full        short
+    (100_000_000,  1_000_000_000,  "billion",   "B"),  # trigger at 0.1 B
+    (100_000,      1_000_000,      "million",   "M"),  # trigger at 0.1 M
+    (1_000,        1_000,          "thousand",  "K"),  # 10^3
 ]
 
-# ── Formatters ────────────────────────────────────────────────────────────────
+_UNIT_DIVISORS = {name: div for _, div, name, _ in _INDIA_UNITS + _WESTERN_UNITS}
 
-def fmt(val) -> str:
-    """Plain float with global decimal places.  e.g. 1234.5 → '1234.500'"""
+# ── Private helpers ───────────────────────────────────────────────────────────
+
+def _to_float(val):
+    """Return (float, None) on success or (None, fallback_str) on failure."""
     try:
-        return f"{float(val):.{DECIMAL_PLACES}f}"
+        return float(val), None
     except (TypeError, ValueError):
-        return str(val)
+        return None, str(val)
 
 
-def fmt_comma(val) -> str:
-    """Float with thousands separator and global decimal places.  e.g. 12345.6 → '12,345.600'"""
-    try:
-        return f"{float(val):,.{DECIMAL_PLACES}f}"
-    except (TypeError, ValueError):
-        return str(val)
+def _fmt_suffix(n: float, units: list) -> str:
+    """Divide n by the first matching threshold and return 'value suffix'."""
+    sign = "-" if n < 0 else ""
+    abs_n = abs(n)
+    for threshold, divisor, suffix, _ in units:
+        if abs_n >= threshold:
+            value = round(abs_n / divisor, 2)
+            value = int(value) if float(value).is_integer() else value
+            return f"{sign}{value} {suffix}"
+    return f"{sign}{abs_n:g}" if abs_n else "0"
 
 
-def _fmt_currency_inr(v: float, d: int) -> str:
-    """Format a non-negative float using the Indian numbering system (12,34,567.89)."""
-    s = f"{v:.{d}f}"
-    parts = s.split(".")
-    integer_part = parts[0]
-    decimal_part = "." + parts[1] if len(parts) > 1 else ""
-
-    if len(integer_part) <= 3:
-        return integer_part + decimal_part
-
-    last_three = integer_part[-3:]
-    rest = integer_part[:-3]
-
-    # Group rest in pairs of 2 from the right; leftmost group may be 1 or 2 digits
+def _fmt_inr_comma(v: float, d: int) -> str:
+    """Format a non-negative float with Indian digit grouping: 12,34,567.89"""
+    integer, _, decimal = f"{v:.{d}f}".partition(".")
+    if len(integer) <= 3:
+        return f"{integer}.{decimal}" if decimal else integer
+    last3, rest = integer[-3:], integer[:-3]
     groups = []
     while len(rest) > 2:
         groups.append(rest[-2:])
         rest = rest[:-2]
     if rest:
         groups.append(rest)
+    grouped = ",".join(reversed(groups)) + "," + last3
+    return f"{grouped}.{decimal}" if decimal else grouped
 
-    return ",".join(reversed(groups)) + "," + last_three + decimal_part
+# ── Public formatters ─────────────────────────────────────────────────────────
+
+def fmt(val) -> str:
+    """Plain decimal.  1234.5 → '1234.50'"""
+    f, err = _to_float(val)
+    return f"{f:.{DECIMAL_PLACES}f}" if err is None else err
 
 
-def fmt_currency(val, currency="INR", decimals=None, fmt="comma") -> str:
-    """Format a numeric value as a currency string.
-
-    fmt:
-      "comma"  → "12,34,567"           (INR: Indian grouping; others: Western)
-      "short"  → "1 crore"             (INR: _format_number_india; others: format_number)
-      "both"   → "12,34,567 (1 crore)"
-    """
-    try:
-        v = float(val)
-        d = DECIMAL_PLACES if decimals is None else decimals
-        sign = "-" if v < 0 else ""
-        abs_v = abs(v)
-
-        # if currency == "INR":
-        #     comma_str = sign + _fmt_currency_inr(abs_v, d)
-        #     short_str = (sign + _format_number_india(abs_v)) if abs_v > 0 else "0"
-        # else:
-        comma_str = f"{sign}{abs_v:,.{d}f}"
-        short_str = format_number(v)
-
-        if fmt == "comma":
-            return comma_str
-        if fmt == "short":
-            return short_str
-        return f"{comma_str} ({short_str})"
-
-    except (TypeError, ValueError):
-        return str(val)
+def fmt_comma(val) -> str:
+    """Western comma-separated decimal.  12345.6 → '12,345.60'"""
+    f, err = _to_float(val)
+    return f"{f:,.{DECIMAL_PLACES}f}" if err is None else err
 
 
 def fmt_pct(val) -> str:
-    """Percentage - always 1 decimal place regardless of DECIMAL_PLACES."""
-    try:
-        return f"{float(val):.1f}"
-    except (TypeError, ValueError):
-        return str(val)
+    """Percentage — always 1 decimal place.  75.3 → '75.3'"""
+    f, err = _to_float(val)
+    return f"{f:.1f}" if err is None else err
 
 
-def _format_number_india(n: float) -> str:
-    """Format a non-negative number using Indian suffixes (lakh, crore)."""
-    for threshold, suffix in _INDIA_THRESHOLDS:
-        if n >= threshold:
-            value = round(n / threshold, 2)
-            value = int(value) if float(value).is_integer() else value
-            return f"{value} {suffix}"
-    return f"{n:g}"
+def fmt_short_india(n) -> str:
+    """India suffix mode.  1_00_00_000 → '1 crore',  50_00_000 → '50 lakh'"""
+    f, err = _to_float(n)
+    return _fmt_suffix(f, _INDIA_UNITS) if err is None else err
+
+
+def fmt_short(n) -> str:
+    """Western suffix mode.  1_000_000 → '1 million',  500_000 → '500 thousand'"""
+    f, err = _to_float(n)
+    return _fmt_suffix(f, _WESTERN_UNITS) if err is None else err
 
 
 def fmt_unit(n, unit: str) -> str:
-    """Express n in the given unit and return a labelled string.
-
-    fmt_unit(15_000_000, "crore")      → "1.5 crore"
-    fmt_unit(2_500_000_000, "billion") → "2.5 billion"
-    fmt_unit(750_000, "lakh")          → "7.5 lakh"
-    """
-    try:
-        n = float(n)
-    except (TypeError, ValueError):
-        return str(n)
-
+    """Express n in an explicit unit.  fmt_unit(15_000_000, 'crore') → '1.5 crore'"""
+    f, err = _to_float(n)
+    if err is not None:
+        return err
     divisor = _UNIT_DIVISORS.get(unit.lower(), 1)
-    sign = "-" if n < 0 else ""
-    val = round(abs(n) / divisor, 2)
-    val = int(val) if float(val).is_integer() else val
-    return f"{sign}{val} {unit}"
+    sign = "-" if f < 0 else ""
+    value = round(abs(f) / divisor, 2)
+    value = int(value) if float(value).is_integer() else value
+    return f"{sign}{value} {unit}"
 
 
-def format_number(n) -> str:
-    """Format a number with Western suffixes (thousand, million, billion …)."""
-    try:
-        n = float(n)
-    except (TypeError, ValueError):
-        return str(n)
+def fmt_currency(val, currency="INR", decimals=None, style="comma") -> str:
+    """Format a value as currency.
 
-    if n == 0:
-        return "0"
+    style  "comma"  → grouped digits only    '12,34,567.00'
+           "short"  → suffix only            '1 crore'
+           "both"   → both                   '12,34,567.00 (1 crore)'
+    """
+    f, err = _to_float(val)
+    if err is not None:
+        return err
 
-    sign = "-" if n < 0 else ""
-    n = abs(n)
+    d = DECIMAL_PLACES if decimals is None else decimals
+    sign = "-" if f < 0 else ""
+    abs_v = abs(f)
 
-    if n < 1000:
-        return f"{sign}{n:g}"
+    SKIP_ME = True
+    if currency == "INR" and not SKIP_ME:
+        comma_str = sign + _fmt_inr_comma(abs_v, d)
+        short_str = fmt_short_india(f)
+    else:
+        comma_str = f"{sign}{abs_v:,.{d}f}"
+        short_str = fmt_short(f)
 
-    idx = int(math.log10(n) // 3)
+    if style == "comma":
+        return comma_str
+    if style == "short":
+        return short_str
+    return f"{comma_str} ({short_str})"
 
-    if idx >= len(_WESTERN_SUFFIXES):
-        return f"{sign}{n:.2e}"
 
-    value = round(n / (10 ** (idx * 3)), 2)
-    if float(value).is_integer():
-        value = int(value)
+# ── Tests ─────────────────────────────────────────────────────────────────────
 
-    return f"{sign}{value} {_WESTERN_SUFFIXES[idx]}"
+if __name__ == "__main__":
+    _PASS = "\033[32mPASS\033[0m"
+    _FAIL = "\033[31mFAIL\033[0m"
+    _errors = 0
+
+    def check(label, got, expected):
+        global _errors
+        if got == expected:
+            print(f"  {_PASS}  {label}")
+        else:
+            print(f"  {_FAIL}  {label}")
+            print(f"         got      : {got!r}")
+            print(f"         expected : {expected!r}")
+            _errors += 1
+
+    # fmt
+    print("fmt")
+    check("integer",        fmt(1234),       "1234.00")
+    check("float",          fmt(1234.5),     "1234.50")
+    check("string number",  fmt("99.9"),     "99.90")
+    check("bad input",      fmt("abc"),      "abc")
+
+    # fmt_comma
+    print("fmt_comma")
+    check("small",          fmt_comma(999),        "999.00")
+    check("thousands",      fmt_comma(12345.6),    "12,345.60")
+    check("millions",       fmt_comma(1234567),    "1,234,567.00")
+
+    # fmt_pct
+    print("fmt_pct")
+    check("normal",         fmt_pct(75.3),   "75.3")
+    check("rounding",       fmt_pct(75.36),  "75.4")
+    check("zero",           fmt_pct(0),      "0.0")
+
+    # fmt_short_india
+    print("fmt_short_india")
+    check("1 crore",        fmt_short_india(1_00_00_000),     "1 crore")
+    check("1.5 crore",      fmt_short_india(1_50_00_000),     "1.5 crore")
+    check("100 crore",      fmt_short_india(1_00_00_00_000),  "100 crore")
+    check("50 lakh",        fmt_short_india(50_00_000),       "50 lakh")
+    check("1 lakh",         fmt_short_india(1_00_000),        "1 lakh")
+    check("below lakh",     fmt_short_india(75_000),          "75000")
+    check("zero",           fmt_short_india(0),               "0")
+    check("negative crore", fmt_short_india(-2_00_00_000),    "-2 crore")
+
+    # fmt_short
+    print("fmt_short")
+    check("1 billion",      fmt_short(1_000_000_000),  "1 billion")
+    check("101 million",    fmt_short(101_000_000),    "0.1 billion")
+    check("1 million",      fmt_short(1_000_000),      "1 million")
+    check("500 thousand",   fmt_short(500_000),        "0.5 million")
+    check("1.5 million",    fmt_short(1_500_000),      "1.5 million")
+    check("below thousand", fmt_short(42),             "42")
+    check("zero",           fmt_short(0),              "0")
+    check("negative",       fmt_short(-2_000_000),     "-2 million")
+
+    # fmt_unit
+    print("fmt_unit")
+    check("crore",          fmt_unit(1_50_00_000,  "crore"),   "1.5 crore")
+    check("lakh",           fmt_unit(7_50_000,     "lakh"),    "7.5 lakh")
+    check("million",        fmt_unit(2_500_000,    "million"), "2.5 million")
+    check("unknown unit",   fmt_unit(5_000,        "xyz"),     "5000 xyz")
+
+    # fmt_currency INR (SKIP_ME=True → Western mode)
+    print("fmt_currency — INR")
+    check("comma",          fmt_currency(12_34_567,    style="comma"),  "1,234,567.00")
+    check("short",          fmt_currency(1_00_00_000,  style="short"),  "10 million")
+    check("both",           fmt_currency(1_00_00_000,  style="both"),   "10,000,000.00 (10 million)")
+    check("negative both",  fmt_currency(-50_00_000,   style="both"),   "-5,000,000.00 (-5 million)")
+    check("below lakh",     fmt_currency(75_000,       style="comma"),  "75,000.00")
+
+    # fmt_currency non-INR
+    print("fmt_currency — USD")
+    check("comma",          fmt_currency(1_234_567, currency="USD", style="comma"),  "1,234,567.00")
+    check("short",          fmt_currency(1_000_000, currency="USD", style="short"),  "1 million")
+    check("both",           fmt_currency(1_000_000, currency="USD", style="both"),   "1,000,000.00 (1 million)")
+
+    print()
+    if _errors:
+        print(f"{_errors} test(s) FAILED")
+        raise SystemExit(1)
+    else:
+        print("All tests passed.")

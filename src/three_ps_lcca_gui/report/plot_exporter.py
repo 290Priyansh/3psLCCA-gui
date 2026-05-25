@@ -128,7 +128,7 @@ def _plot_pillar_donut(results: dict, currency: str) -> plt.Figure:
 
     # Centre: total value (same text as GUI centre_text)
     ax.text(0, 0,
-            f"TOTAL\n{fmt_currency(total, currency, 2)} M {currency}\n"
+            f"Total\n{fmt_currency(total, currency, 2)} M {currency}\n"
             f"({currency} {fmt_currency(total * 1_000_000, currency, 0)})",
             ha="center", va="center", fontsize=8.5,
             fontweight="bold", color=_TC)
@@ -203,7 +203,7 @@ def _plot_sustainability_matrix(results: dict, currency: str) -> plt.Figure:
 
     # Centre label
     ax.text(0, 0,
-            f"TOTAL\n{fmt_currency(total, currency, 2)} M {currency}\n"
+            f"Total\n{fmt_currency(total, currency, 2)} M {currency}\n"
             f"({currency} {fmt_currency(total * 1_000_000, currency, 0)})",
             ha="center", va="center", fontsize=8.5,
             fontweight="bold", color=_TC)
