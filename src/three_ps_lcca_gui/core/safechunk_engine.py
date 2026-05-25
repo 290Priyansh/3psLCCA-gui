@@ -1037,7 +1037,7 @@ class SafeChunkEngine:
         Always returns True if no checkpoint exists yet.
         """
         last_cps = sorted(
-            self.checkpoint_auto.glob("cp_*.3psLCCA"),
+            self.checkpoint_auto.glob("cp_*.3ps"),
             key=os.path.getmtime,
             reverse=True,
         )
@@ -1123,7 +1123,7 @@ class SafeChunkEngine:
         timestamp = (
             time.strftime("%Y%m%d_%H%M%S") + f"_{int(time.time() * 1000) % 1000:03d}"
         )
-        zip_name = f"cp_{clean_label}_{timestamp}.3psLCCA"
+        zip_name = f"cp_{clean_label}_{timestamp}.3ps"
         zip_path = folder / zip_name
 
         # Snapshot blob hashes at checkpoint time (always, regardless of include_blobs)
@@ -1176,7 +1176,7 @@ class SafeChunkEngine:
             (folder / f"{zip_name}.sha256").write_text(sha)
 
             # Enforce retention for this folder only
-            zips = sorted(folder.glob("cp_*.3psLCCA"), key=os.path.getmtime)
+            zips = sorted(folder.glob("cp_*.3ps"), key=os.path.getmtime)
             while len(zips) > retention:
                 oldest = zips.pop(0)
                 oldest.unlink()
@@ -1363,7 +1363,7 @@ class SafeChunkEngine:
         ]
 
         for folder, cp_type in sources:
-            for zp in folder.glob("cp_*.3psLCCA"):
+            for zp in folder.glob("cp_*.3ps"):
                 try:
                     verified = self.verify_checkpoint(zp.name)
                     meta = {}
@@ -2076,8 +2076,8 @@ class SafeChunkEngine:
         cp_path = item / "checkpoints"
         if cp_path.exists():
             zips = sorted(
-                list((cp_path / "manual").glob("cp_*.3psLCCA"))
-                + list((cp_path / "auto").glob("cp_*.3psLCCA")),
+                list((cp_path / "manual").glob("cp_*.3ps"))
+                + list((cp_path / "auto").glob("cp_*.3ps")),
                 key=os.path.getmtime,
                 reverse=True,
             )
@@ -2124,8 +2124,8 @@ class SafeChunkEngine:
             "optimize": self.optimize,
             "chunk_count": len(list(self.chunks_path.glob(f"*{LCCA_EXT}"))),
             "checkpoint_count": (
-                len(list(self.checkpoint_manual.glob("cp_*.3psLCCA")))
-                + len(list(self.checkpoint_auto.glob("cp_*.3psLCCA")))
+                len(list(self.checkpoint_manual.glob("cp_*.3ps")))
+                + len(list(self.checkpoint_auto.glob("cp_*.3ps")))
             ),
             "pending_syncs": len(self._staged_data),
             "wal_exists": self.wal_path.exists(),

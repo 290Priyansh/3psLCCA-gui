@@ -363,7 +363,7 @@ class DataPreparer:
     @staticmethod
     def build_export_dict(all_data: dict, lcc_breakdown: dict, results: dict) -> dict:
         """
-        Build the full export dict written to a .3psLCCAFile file.
+        Build the full export dict written to a .3ps file.
 
         Structure
         ---------

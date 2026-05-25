@@ -1752,10 +1752,10 @@ class HomePage(QWidget):
         
         # Set default directory to Documents
         default_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
-        default_path = os.path.join(default_dir, f"{display}.3psLCCA")
+        default_path = os.path.join(default_dir, f"{display}.3ps")
 
         dest, _ = QFileDialog.getSaveFileName(
-            self, "Export Project", default_path, "3psLCCA Archive (*.3psLCCA)")
+            self, "Export Project", default_path, "3ps Archive (*.3ps)")
         if not dest:
             return
         engine, status = SafeChunkEngine.open(pid)
@@ -1770,7 +1770,7 @@ class HomePage(QWidget):
 
     def _load_shared_project(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load Project", "", "3psLCCA Archive (*.3psLCCA)")
+            self, "Load Project", "", "3ps Archive (*.3ps *.3psLCCA)")
         if not path:
             return
         try:

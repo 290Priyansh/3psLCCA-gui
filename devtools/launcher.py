@@ -62,7 +62,7 @@ def _get_tools() -> list[dict]:
             "icon":   "🔬",
             "name":   "Project Inspector",
             "desc":   (
-                "Open and inspect .3psLCCA project archive files.\n"
+                "Open and inspect .3ps project archive files.\n"
                 "Browse every chunk and blob stored inside the archive, view or edit their "
                 "raw JSON, run integrity checks, and export a repaired copy. "
                 "Use this when a project fails to open or behaves unexpectedly."

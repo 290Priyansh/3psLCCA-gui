@@ -879,10 +879,10 @@ class ProjectWindow(QMainWindow):
 
         # Set default directory to Documents
         default_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
-        default_path = os.path.join(default_dir, f"{display}.3psLCCA")
+        default_path = os.path.join(default_dir, f"{display}.3ps")
 
         dest, _ = QFileDialog.getSaveFileName(
-            self, "Export Project", default_path, "3psLCCA Archive (*.3psLCCA)"
+            self, "Export Project", default_path, "3ps Archive (*.3ps)"
         )
         if not dest:
             return

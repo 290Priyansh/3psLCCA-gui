@@ -5,13 +5,13 @@ devtools/devtools_window.py
 
 Purpose:
   Something broke. Open the project, find the bad chunk,
-  fix it, export a new .3psLCCA, reshare.
+  fix it, export a new .3ps, reshare.
 
 Workflow:
-  1. Open  - project folder or .3psLCCA archive
+  1. Open  - project folder or .3ps archive
   2. Inspect - view chunks / metadata / blobs; run integrity check
   3. Fix   - edit chunk JSON directly in the tool, validate, save
-  4. Share - create a binary .3psLCCA (with or without blobs)
+  4. Share - create a binary .3ps (with or without blobs)
 """
 
 import hashlib
@@ -83,7 +83,7 @@ class DevToolsWindow(QMainWindow):
         self._editing: bool = False
 
         self._build_ui()
-        self._set_status("Open a project folder or .3psLCCA archive to begin.")
+        self._set_status("Open a project folder or .3ps archive to begin.")
 
     # ── UI build ───────────────────────────────────────────────────────────────
 
@@ -122,7 +122,7 @@ class DevToolsWindow(QMainWindow):
         layout.addStretch()
 
         layout.addWidget(self._tbtn("📁  Open Folder", self._open_folder))
-        layout.addWidget(self._tbtn("📦  Open Archive (.3psLCCA)", self._open_archive))
+        layout.addWidget(self._tbtn("📦  Open Archive (.3ps)", self._open_archive))
 
         sep = QLabel("|")
         sep.setStyleSheet("color:#444; padding:0 4px;")
@@ -215,7 +215,7 @@ class DevToolsWindow(QMainWindow):
         layout.setContentsMargins(12, 6, 12, 6)
         layout.setSpacing(10)
 
-        self.btn_share = QPushButton("📤  Create .3psLCCA...")
+        self.btn_share = QPushButton("📤  Create .3ps...")
         self.btn_share.setFixedHeight(34)
         self.btn_share.setEnabled(False)
         self.btn_share.setStyleSheet(
@@ -334,13 +334,13 @@ class DevToolsWindow(QMainWindow):
 
     def _open_archive(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Open Archive", "", "3psLCCA Archive (*.3psLCCA);;All Files (*)"
+            self, "Open Archive", "", "3ps Archive (*.3ps *.3psLCCA);;All Files (*)"
         )
         if not path:
             return
 
         if not zipfile.is_zipfile(path):
-            self._warn("Invalid File", "Not a valid .3psLCCA archive.")
+            self._warn("Invalid File", "Not a valid .3ps archive.")
             return
 
         self._cleanup_temp()
@@ -701,15 +701,15 @@ class DevToolsWindow(QMainWindow):
         if modified_count:
             msg += f"  ({modified_count} modified)"
 
-        default_name = f"share_{time.strftime('%Y%m%d_%H%M%S')}.3psLCCA"
+        default_name = f"share_{time.strftime('%Y%m%d_%H%M%S')}.3ps"
         out_path, _ = QFileDialog.getSaveFileName(
-            self, "Save .3psLCCA Archive", default_name,
-            "3psLCCA Archive (*.3psLCCA)",
+            self, "Save .3ps Archive", default_name,
+            "3psLCCA Archive (*.3ps)",
         )
         if not out_path:
             return
-        if not out_path.endswith(".3psLCCA"):
-            out_path += ".3psLCCA"
+        if not out_path.endswith(".3ps"):
+            out_path += ".3ps"
 
         include_blobs = self.chk_blobs.isChecked()
         recreate_integrity = self.chk_integrity.isChecked()
