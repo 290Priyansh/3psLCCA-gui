@@ -1379,8 +1379,6 @@ class ComparisonPickerPanel(QWidget):
             f"border-radius: {BTN_SM // 2}px; color: {get_token('text_secondary')}; padding: 0; }}"
             f"QPushButton:hover {{ border-color: {get_token('danger')}; color: {get_token('danger')}; "
             f"background: transparent; }}"
-            f"QToolTip {{ color: {get_token('text')}; background: {get_token('surface')}; "
-            f"border: 1px solid {get_token('surface_mid')}; padding: 4px 8px; }}"
         )
         del_btn.clicked.connect(lambda _, h=hid: self._remove_history(h))
         br_h.addWidget(del_btn)

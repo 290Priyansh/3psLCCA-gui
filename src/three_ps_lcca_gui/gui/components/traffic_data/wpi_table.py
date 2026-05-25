@@ -281,7 +281,7 @@ class _WPITable(QTableWidget):
             if index.isValid():
                 item = self.item(index.row(), index.column())
                 if item and item.toolTip():
-                    QToolTip.showText(event.globalPos(), item.toolTip(), self)
+                    QToolTip.showText(event.globalPos(), item.toolTip())
                     return True
             QToolTip.hideText()
             return True

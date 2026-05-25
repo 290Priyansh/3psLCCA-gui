@@ -131,13 +131,12 @@ class HeatmapDelegate(QStyledItemDelegate):
             QToolTip.showText(
                 event.globalPos(),
                 f"Actual Value: {self.currency} {fmt_currency(actual_val, self.currency, decimals=0, fmt='both')}",
-                view
             )
             return True
         else:
             txt = index.data(Qt.DisplayRole)
             if txt:
-                QToolTip.showText(event.globalPos(), str(txt), view)
+                QToolTip.showText(event.globalPos(), str(txt))
                 return True
 
         return super().helpEvent(event, view, option, index)
@@ -152,13 +151,12 @@ class HeatmapDelegate(QStyledItemDelegate):
             QToolTip.showText(
                 event.globalPos(),
                 f"Actual Value: {self.currency} {fmt_currency(actual_val, self.currency, decimals=0, fmt='both')}",
-                view
             )
             return True
         else:
             txt = index.data(Qt.DisplayRole)
             if txt:
-                QToolTip.showText(event.globalPos(), str(txt), view)
+                QToolTip.showText(event.globalPos(), str(txt))
                 return True
                 
         return super().helpEvent(event, view, option, index)
@@ -599,7 +597,7 @@ class LCCBreakdownTable(QWidget):
                     elided = fm.elidedText(label, Qt.ElideRight, item_w)
                     tip = label if elided != label or "\n" in label else ""
                     if tip:
-                        QToolTip.showText(event.globalPos(), tip, self)
+                        QToolTip.showText(event.globalPos(), tip)
                         return True
 
                 # Value column → show full precision
@@ -607,7 +605,6 @@ class LCCBreakdownTable(QWidget):
                     QToolTip.showText(
                         event.globalPos(),
                         f"{fmt_currency(value, self._currency, decimals=4)} {self._currency}",
-                        self,
                     )
                     return True
 
@@ -616,7 +613,6 @@ class LCCBreakdownTable(QWidget):
                     QToolTip.showText(
                         event.globalPos(),
                         f"{fmt_currency(value, self._currency, decimals=2)} {self._currency}",
-                        self,
                     )
                     return True
 

@@ -430,7 +430,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
             if index.isValid() and index.column() != action_col:
                 item = self.item(index.row(), index.column())
                 if item and item.text():
-                    QToolTip.showText(event.globalPos(), item.text(), self)
+                    QToolTip.showText(event.globalPos(), item.text())
                     return True
             QToolTip.hideText()
         return super().viewportEvent(event)
