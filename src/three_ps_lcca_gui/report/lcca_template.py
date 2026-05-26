@@ -962,7 +962,7 @@ class LCCATemplate:
 if __name__ == "__main__":
     import argparse, pprint
     parser = argparse.ArgumentParser(description="Preview extracted LCCA template data")
-    parser.add_argument("json", help="Path to .3psLCCA JSON file")
+    parser.add_argument("json", help="Path to .3ps JSON file")
     args = parser.parse_args()
 
     with open(args.json, "r", encoding="utf-8") as fh:

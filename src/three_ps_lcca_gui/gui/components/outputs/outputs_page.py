@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt, QObject, QSize, QThread, QTimer, Signal
 
 from three_ps_lcca_gui.gui.themes import get_token, theme_manager
@@ -259,81 +260,177 @@ class _LCCAWorker(QObject):
 # ──────────────────────────────────────────────────────────────
 
 
+class ResponsiveTotalCard(QFrame):
+    def __init__(self, total_value: float, results: dict, currency: str, parent=None):
+        super().__init__(parent)
+        self.setObjectName("kpiCard")
+        self.setStyleSheet(
+            f"#kpiCard {{"
+            f"  background-color: {get_token('surface')};"
+            f"  border: 1px solid {get_token('surface_mid')};"
+            f"  border-top: 3px solid {get_token('primary')};"
+            f"  border-radius: {RADIUS_LG}px;"
+            f"}}"
+        )
+        self.setMinimumHeight(110)
+        
+        self.main_layout = QGridLayout(self)
+        self.main_layout.setContentsMargins(SP5, SP4, SP5, SP4)
+        self.main_layout.setSpacing(SP4)
+
+        # LEFT SIDE: Total
+        self.left_widget = QWidget()
+        self.left_widget.setStyleSheet("background: transparent; border: none;")
+        left_v = QVBoxLayout(self.left_widget)
+        left_v.setContentsMargins(0, 0, 0, 0)
+        left_v.setSpacing(0)
+        
+        title_lbl = QLabel("Total Lifecycle Cost")
+        title_lbl.setFont(_f(FS_SM, FW_MEDIUM))
+        title_lbl.setStyleSheet(f"color: {get_token('text_secondary')}; letter-spacing: 1px; border: none; background: transparent;")
+        left_v.addWidget(title_lbl)
+        left_v.addSpacing(SP2)
+        
+        val_str = fmt_currency(total_value, currency, decimals=0, style="short").title()
+        val_lbl = QLabel(val_str)
+        val_lbl.setFont(_f(FS_DISP, FW_BOLD))
+        val_lbl.setStyleSheet(f"color: {get_token('primary')}; border: none; background: transparent;")
+        left_v.addWidget(val_lbl)
+        
+        curr_lbl = QLabel(currency)
+        curr_lbl.setFont(_f(FS_XS, FW_NORMAL))
+        curr_lbl.setStyleSheet(f"color: {get_token('text_disabled')}; border: none; letter-spacing: 0.5px; background: transparent;")
+        left_v.addWidget(curr_lbl)
+        left_v.addStretch()
+
+        # RIGHT SIDE: About this analysis
+        _LOREM = (
+            "Total lifecycle cost (across the three pillars) evaluated over an analysis period of ____ years at the assessment year _____."
+        )
+        
+        self.right_widget = QWidget()
+        self.right_widget.setStyleSheet("background: transparent; border: none;")
+        right_v = QVBoxLayout(self.right_widget)
+        right_v.setContentsMargins(0, 0, 0, 0)
+        right_v.setSpacing(SP2)
+        
+        lorem_title = QLabel("About This Analysis")
+        lorem_title.setFont(_f(FS_SM, FW_MEDIUM))
+        lorem_title.setStyleSheet(f"color: {get_token('text_secondary')}; letter-spacing: 1px; border: none; background: transparent;")
+        right_v.addWidget(lorem_title)
+        
+        lorem_lbl = QLabel(_LOREM)
+        lorem_lbl.setWordWrap(True)
+        lorem_lbl.setAlignment(Qt.AlignJustify)
+        lorem_lbl.setFont(_f(FS_BASE))
+        lorem_lbl.setStyleSheet(f"color: {get_token('text')}; border: none; background: transparent;")
+        right_v.addWidget(lorem_lbl)
+        right_v.addStretch()
+
+        self.divider = QFrame()
+        self.divider.setStyleSheet(f"background-color: {get_token('surface_mid')}; border: none;")
+        
+        self.is_narrow = None
+        self._setup_layout(False)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        narrow = self.width() < 600
+        if narrow != self.is_narrow:
+            self.is_narrow = narrow
+            self._setup_layout(narrow)
+
+    def _setup_layout(self, narrow: bool):
+        self.main_layout.removeWidget(self.left_widget)
+        self.main_layout.removeWidget(self.divider)
+        self.main_layout.removeWidget(self.right_widget)
+        
+        if narrow:
+            self.divider.setFrameShape(QFrame.HLine)
+            self.divider.setMinimumSize(0, 1)
+            self.divider.setMaximumSize(16777215, 1)
+            
+            self.main_layout.addWidget(self.left_widget, 0, 0)
+            self.main_layout.addWidget(self.divider, 1, 0)
+            self.main_layout.addWidget(self.right_widget, 2, 0)
+            self.main_layout.setColumnStretch(0, 1)
+            self.main_layout.setColumnStretch(1, 0)
+            self.main_layout.setColumnStretch(2, 0)
+        else:
+            self.divider.setFrameShape(QFrame.VLine)
+            self.divider.setMinimumSize(1, 0)
+            self.divider.setMaximumSize(1, 16777215)
+            
+            self.main_layout.addWidget(self.left_widget, 0, 0)
+            self.main_layout.addWidget(self.divider, 0, 1)
+            self.main_layout.addWidget(self.right_widget, 0, 2)
+            self.main_layout.setColumnStretch(0, 0)
+            self.main_layout.setColumnStretch(1, 0)
+            self.main_layout.setColumnStretch(2, 1)
+
+
 class LCCSummaryCards(QWidget):
-    """Three top-line KPI cards: Total LCCA, Initial Investment, Future Liabilities."""
+    """
+    Three-row KPI layout:
+      Row 1 – Grand Total (full width)
+      Row 2 – Economic / Environmental / Social  (pillar totals)
+      Row 3 – Initial / Use / End-of-Life        (stage totals)
+    """
 
     def __init__(self, results: dict, currency: str, parent=None):
         super().__init__(parent)
         self._results = results
         self._currency = currency
-        self._cards = []
-        self._last_cols = None
         self._setup_ui()
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
     def _setup_ui(self):
-        self._grid = QGridLayout(self)
-        self._grid.setContentsMargins(0, SP3, 0, SP5)
-        self._grid.setSpacing(SP5)
-
-        summary = compute_all_summaries(self._results)
+        summary  = compute_all_summaries(self._results)
         stagewise = summary.get("stagewise", {})
+        pt        = summary.get("pillar_totals", {})
 
-        total_lcca = sum(stagewise.values())
-        initial = stagewise.get("initial", 0)
-        future = stagewise.get("use_reconstruction", 0) + stagewise.get("end_of_life", 0)
+        grand_total = sum(stagewise.values())
 
-        cards_data = [
-            (
-                "Total Life-Cycle Cost (NPV)",
-                total_lcca,
-                get_token("primary"),
-                "Comprehensive total of all life-cycle expenditures discounted to the assessment year.",
-            ),
-            (
-                "Initial Cost",
-                initial,
-                get_token("success"),
-                "Cumulative total of construction, economic, social, and environmental costs incurred during the initial phase.",
-            ),
-            (
-                "Future Cost",
-                future,
-                get_token("warning"),
-                "Cumulative cost expected for maintenance, repairs, replacement and demolition.",
-            ),
-        ]
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, SP3, 0, SP5)
+        outer.setSpacing(SP3)
 
-        for title, val, color, subtitle in cards_data:
-            self._cards.append(self._create_card(title, val, color, subtitle))
+        # ── Row 1: Grand Total + description ─────────────────────────────
+        row1 = QHBoxLayout()
+        row1.setSpacing(SP3)
+        row1.addWidget(ResponsiveTotalCard(grand_total, self._results, self._currency))
+        outer.addLayout(row1)
 
-        self._rearrange(self.width())
+        # ── Row 2: Pillar totals ──────────────────────────────────────────
+        row2 = QHBoxLayout()
+        row2.setSpacing(SP3)
+        for title, key, token in [
+            ("Economic",      "eco",    "eco"),
+            ("Environmental", "env",    "env"),
+            ("Social",        "social", "soc"),
+        ]:
+            row2.addWidget(self._card(title, pt.get(key, 0), get_token(token)))
+        outer.addLayout(row2)
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._rearrange(event.size().width())
+        # ── Row 3: Stage totals ───────────────────────────────────────────
+        row3 = QHBoxLayout()
+        row3.setSpacing(SP3)
+        for title, key, token in [
+            ("Initial",     "initial",     "init"),
+            ("Use",         "use",         "use"),
+            ("End-of-Life", "end_of_life", "end"),
+        ]:
+            row3.addWidget(self._card(title, stagewise.get(key, 0), get_token(token)))
+        outer.addLayout(row3)
 
-    def _rearrange(self, width: int):
-        new_cols = width >= 750
-        if self._last_cols == new_cols:
-            return
-        self._last_cols = new_cols
-        for i in reversed(range(self._grid.count())):
-            self._grid.takeAt(i)
-        if not new_cols:
-            for i, card in enumerate(self._cards):
-                self._grid.addWidget(card, i, 0)
-        else:
-            for i, card in enumerate(self._cards):
-                self._grid.addWidget(card, 0, i)
-
-    def _create_card(self, title: str, value: float, color_hex: str, subtitle: str) -> QFrame:
+    def _card(self, title: str, value: float, accent: str, large: bool = False) -> QFrame:
         card = QFrame()
         card.setObjectName("kpiCard")
         card.setStyleSheet(
             f"#kpiCard {{"
             f"  background-color: {get_token('surface')};"
             f"  border: 1px solid {get_token('surface_mid')};"
+            f"  border-top: 3px solid {accent};"
             f"  border-radius: {RADIUS_LG}px;"
             f"}}"
         )
@@ -342,20 +439,18 @@ class LCCSummaryCards(QWidget):
         v.setContentsMargins(SP5, SP4, SP5, SP4)
         v.setSpacing(0)
 
-        title_lbl = QLabel(title.upper())
-        title_lbl.setWordWrap(False)
+        title_lbl = QLabel(title)
         title_lbl.setFont(_f(FS_SM, FW_MEDIUM))
         title_lbl.setStyleSheet(
             f"color: {get_token('text_secondary')}; letter-spacing: 1px; border: none;"
         )
         v.addWidget(title_lbl)
-        v.addSpacing(SP3)
+        v.addSpacing(SP2)
 
-        val_str = fmt_currency(value, self._currency, decimals=0)
+        val_str = fmt_currency(value, self._currency, decimals=0, style="short").title()
         val_lbl = QLabel(val_str)
-        val_lbl.setWordWrap(False)
-        val_lbl.setFont(_f(FS_DISP, FW_BOLD))
-        val_lbl.setStyleSheet(f"color: {color_hex}; border: none;")
+        val_lbl.setFont(_f(FS_DISP if large else FS_XL, FW_BOLD))
+        val_lbl.setStyleSheet(f"color: {accent}; border: none;")
         v.addWidget(val_lbl)
 
         curr_lbl = QLabel(self._currency)
@@ -364,15 +459,8 @@ class LCCSummaryCards(QWidget):
             f"color: {get_token('text_disabled')}; border: none; letter-spacing: 0.5px;"
         )
         v.addWidget(curr_lbl)
-        v.addSpacing(SP3)
 
-        sub_lbl = QLabel(subtitle)
-        sub_lbl.setWordWrap(True)
-        sub_lbl.setFont(_f(FS_MD, FW_NORMAL))
-        sub_lbl.setStyleSheet(f"color: {get_token('text_secondary')}; border: none;")
-        v.addWidget(sub_lbl)
-
-        card.setMinimumHeight(140)
+        card.setMinimumHeight(110 if large else 90)
         return card
 
 
@@ -559,11 +647,11 @@ class LCCInsightsWidget(QWidget):
         }
         dominant = max(stage_totals_raw, key=stage_totals_raw.get)
         dom_pct = stage_totals_raw[dominant] / grand * 100
-        dom_val = fmt_currency(stage_totals_raw[dominant], c, decimals=0)
+        dom_val = fmt_currency(stage_totals_raw[dominant], c, decimals=0, style="both")
         findings.append((
             "●", "primary",
             f"<b>{stage_labels[dominant]}</b> is the largest cost stage at "
-            f"<b>{dom_pct:.0f}%</b> of total lifecycle cost ({c} {dom_val}).",
+            f"<b>{dom_pct:.0f}%</b> of total lifecycle cost — {c} {dom_val}.",
         ))
 
         soc_pct = soc_total / grand * 100
@@ -581,9 +669,9 @@ class LCCInsightsWidget(QWidget):
             ratio = ruc_init / construction
             findings.append((
                 "●", "danger",
-                f"Building this bridge costs road users <b>{c} {fmt_currency(ruc_init, c, decimals=0)}</b> "
+                f"Building this bridge costs road users <b>{c} {fmt_currency(ruc_init, c, decimals=0, style='both')}</b> "
                 f"in delays—that is <b>{ratio:.1f}× the construction contract value</b> "
-                f"({c} {fmt_currency(construction, c, decimals=0)}). Faster construction directly reduces this social burden.",
+                f"{c} {fmt_currency(construction, c, decimals=0, style='both')}. Faster construction directly reduces this social burden.",
             ))
 
         bej = _get("use_stage", "economic", "replacement_costs_for_bearing_and_expansion_joint")
@@ -593,7 +681,7 @@ class LCCInsightsWidget(QWidget):
             findings.append((
                 "●", "text",
                 f"Bearing & expansion joint replacements account for <b>{bej_pct:.0f}%</b> of all "
-                f"maintenance expenditure ({c} {fmt_currency(bej, c, decimals=0)}). "
+                f"maintenance expenditure — {c} {fmt_currency(bej, c, decimals=0, style='both')}. "
                 f"This is the single largest recurring maintenance cost item.",
             ))
 
@@ -604,8 +692,8 @@ class LCCInsightsWidget(QWidget):
             findings.append((
                 "●", "warning",
                 f"Mid-life reconstruction disrupts road users <b>{rd_ratio:.1f}× more</b> than "
-                f"final end-of-life demolition ({c} {fmt_currency(recon_soc, c, decimals=0)} vs "
-                f"{c} {fmt_currency(eol_soc, c, decimals=0)}). Minimising reconstruction frequency "
+                f"final end-of-life demolition — {c} {fmt_currency(recon_soc, c, decimals=0, style='both')} vs "
+                f"{c} {fmt_currency(eol_soc, c, decimals=0, style='both')}. Minimising reconstruction frequency "
                 f"has an outsized social benefit.",
             ))
 
@@ -641,7 +729,7 @@ class LCCInsightsWidget(QWidget):
             findings.append((
                 "●", "text",
                 f"Financing cost over the loan period is <b>{loan_pct:.1f}%</b> of construction value "
-                f"({c} {fmt_currency(loan_init, c, decimals=0)})- a relatively small component of total cost.",
+                f"{c} {fmt_currency(loan_init, c, decimals=0, style='both')} — a relatively small component of total cost.",
             ))
 
         return findings
@@ -680,7 +768,7 @@ class OutputsPage(ScrollableForm):
     def _build_ui(self):
         f = self.form
 
-        self._header = QLabel("Outputs")
+        self._header = QLabel("Results")
         self._header.setFont(_f(FS_DISP, FW_BOLD))
         self._header.setStyleSheet(
             f"color: {get_token('text')}; margin-bottom: {SP2}px;"
@@ -915,7 +1003,7 @@ class OutputsPage(ScrollableForm):
                 )
 
         if not all_errors:
-            run_btn = QPushButton("Proceed with Calculation")
+            run_btn = QPushButton("Run the Life Cycle Cost (LCC) analysis")
             run_btn.setFixedHeight(BTN_LG)
             run_btn.setStyleSheet(btn_primary())
             run_btn.clicked.connect(self._on_proceed)
@@ -1021,12 +1109,12 @@ class OutputsPage(ScrollableForm):
         self._status_layout.addWidget(toolbar_row)
 
         sections = [
-            lambda r: _section_heading("At a Glance"),
+            lambda r: _section_heading("Summary"),
             lambda r: LCCSummaryCards(r, currency=self._currency),
             lambda r: _divider(),
-            lambda r: _section_heading("Life cycle cost distribution"),
+            lambda r: _section_heading("Distribution of LCC"),
             lambda r: _section_description(
-                "These charts illustrate the distribution of project costs. The Sustainability Matrix disaggregates costs across the Economic, Environmental, and Social Pillars. The aggregation chart compares the relative weight of three lifecycle phases: Initial Construction, the combined Use/Maintenance/Reconstruction stage, and the final End-of-Life phase."
+                "These charts illustrate the distribution of the total life cycle cost. The Sustainability Matrix disaggregates costs across the Economic, Environmental, and Social Pillars. The aggregation chart compares the relative weight of three lifecycle phases: Initial Construction, the combined Use/Maintenance/Reconstruction stage, and the final End-of-Life phase."
             ),
             lambda r: LCCPieWidget(r, currency=self._currency),
             lambda r: AggregateChartWidget(r, currency=self._currency),
@@ -1037,10 +1125,10 @@ class OutputsPage(ScrollableForm):
             ),
             lambda r: LCCDetailsTable(r, currency=self._currency),
             lambda r: _divider(),
-            lambda r: _section_heading("Itemized detail"),
-            lambda r: _section_description(
-                "An itemised schedule of each individual cost component. All values are discounted to the year of assessment, thus representing the present sum of money required to meet future expenditures."
-            ),
+            # lambda r: _section_heading("Itemized detail"),
+            # lambda r: _section_description(
+            #     "An itemised schedule of each individual cost component. All values are discounted to the year of assessment, thus representing the present sum of money required to meet future expenditures."
+            # ),
             lambda r: LCCBreakdownTable(r, currency=self._currency),
         ]
         QTimer.singleShot(0, lambda: self._build_result_widgets(results, sections))
@@ -1070,7 +1158,7 @@ class OutputsPage(ScrollableForm):
         self._pages = {
             n: p
             for n, p in widget_map.items()
-            if n != "Outputs" and hasattr(p, "validate")
+            if n != "Results" and hasattr(p, "validate")
         }
 
     # ── Validation & calculation ──────────────────────────────

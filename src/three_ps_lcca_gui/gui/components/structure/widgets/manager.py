@@ -21,6 +21,7 @@ from .material_dialog import MaterialDialog
 from ...utils.definitions import UNIT_DISPLAY
 from ...utils.validation_helpers import freeze_widgets
 from ...utils.display_format import fmt, fmt_comma
+from three_ps_lcca_gui.gui.styles import btn_danger
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +40,7 @@ class StructureManagerWidget(QWidget):
 
         self._frozen = False
         self._add_material_btns = []
+        self._del_comp_btns = []
 
         self.main_layout = QVBoxLayout(self)
 
@@ -105,6 +107,7 @@ class StructureManagerWidget(QWidget):
 
         self.sections = {}
         self._add_material_btns = []
+        self._del_comp_btns = []
         currency = getattr(self, "_currency", "")
 
         for comp_name, items in self.data.items():
@@ -146,13 +149,25 @@ class StructureManagerWidget(QWidget):
         table = StructureTableWidget(self, name)
         self.sections[name] = table
 
+        btn_bar = QHBoxLayout()
+
         add_row_btn = QPushButton(f"Add Material to {name}")
         add_row_btn.clicked.connect(lambda checked=False, n=name: self.open_dialog(n))
         freeze_widgets(self._frozen, add_row_btn)
         self._add_material_btns.append(add_row_btn)
 
+        del_btn = QPushButton("Delete Component")
+        del_btn.setObjectName("deleteButton")
+        del_btn.setStyleSheet(btn_danger())
+        del_btn.clicked.connect(lambda checked=False, n=name: self.delete_component(n))
+        freeze_widgets(self._frozen, del_btn)
+        self._del_comp_btns.append(del_btn)
+
+        btn_bar.addWidget(add_row_btn, 1)
+        btn_bar.addWidget(del_btn)
+
         g_layout.addWidget(table)
-        g_layout.addWidget(add_row_btn)
+        g_layout.addLayout(btn_bar)
         self.container_layout.addWidget(group)
 
     def add_material(self, comp_name, values_dict, is_trash=False):
@@ -409,18 +424,51 @@ class StructureManagerWidget(QWidget):
         name = dialog.textValue()
         if ok and name.strip():
             clean_name = name.strip()
-            self.create_section(clean_name)
             current_data = self.controller.engine.fetch_chunk(self.chunk_name) or {}
-            if clean_name not in current_data:
-                current_data[clean_name] = []
-                self.controller.engine.stage_update(
-                    chunk_name=self.chunk_name, data=current_data
+            if clean_name in current_data:
+                QMessageBox.warning(
+                    self,
+                    "Duplicate Component",
+                    f'A component named "{clean_name}" already exists.',
                 )
-                self.save_current_state()
+                return
+            current_data[clean_name] = []
+            self.controller.engine.stage_update(
+                chunk_name=self.chunk_name, data=current_data
+            )
+            self.create_section(clean_name)
+            self.save_current_state()
+
+    def delete_component(self, name):
+        current_data = self.controller.engine.fetch_chunk(self.chunk_name) or {}
+        items = current_data.get(name, [])
+        active_count = sum(
+            1 for i in items if not i.get("state", {}).get("in_trash", False)
+        )
+
+        msg = f'Delete component "{name}"?'
+        if active_count:
+            msg += f"\n\n{active_count} material(s) inside will be permanently removed."
+
+        reply = QMessageBox.question(
+            self,
+            "Delete Component",
+            msg,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        current_data.pop(name, None)
+        self.controller.engine.stage_update(chunk_name=self.chunk_name, data=current_data)
+        self.save_current_state()
+        self.data = current_data
+        self.refresh_ui()
 
     def freeze(self, frozen: bool = True):
         self._frozen = frozen
-        freeze_widgets(frozen, self.add_comp_btn, *self._add_material_btns)
+        freeze_widgets(frozen, self.add_comp_btn, *self._add_material_btns, *self._del_comp_btns)
         for table in self.sections.values():
             table.freeze(frozen)
 

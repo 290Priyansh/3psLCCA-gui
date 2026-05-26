@@ -1152,8 +1152,8 @@ class HomePage(QWidget):
         saved_sort = sm.get_pref("sort_order") or "recent"
         for label, key in [
             ("Recent", "recent"),
-            ("Name", "name"),
-            ("Pinned", "pinned"),
+            ("All", "name"),
+            ("Starred", "pinned"),
             ("Compare", "compare"),
         ]:
             btn = QPushButton(label)
@@ -1531,10 +1531,10 @@ class HomePage(QWidget):
             self.grid_section_lbl.setText("READY TO COMPARE")
         elif sort_key == "pinned":
             projects = [p for p in projects if p.get("pinned")]
-            self.grid_section_lbl.setText("PINNED PROJECTS")
+            self.grid_section_lbl.setText("STARRED PROJECTS")
         elif sort_key == "name":
             projects.sort(key=lambda p: (p.get("display_name") or "").lower())
-            self.grid_section_lbl.setText("ALL PROJECTS - A–Z")
+            self.grid_section_lbl.setText("ALL PROJECTS - A-Z")
         else:
             def get_latest_time(p):
                 t1 = p.get("last_opened_at") or ""
@@ -1633,7 +1633,7 @@ class HomePage(QWidget):
         menu.addSeparator()
         menu.addAction(
             "Copy Name", lambda: QApplication.clipboard().setText(display))
-        menu.addAction("Share / Export...",
+        menu.addAction("Share",
                        lambda: self._share_project(pid, display))
         menu.addAction("Rename", lambda: self._rename_by_pid(pid, display))
         menu.addAction(
@@ -1752,10 +1752,10 @@ class HomePage(QWidget):
         
         # Set default directory to Documents
         default_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
-        default_path = os.path.join(default_dir, f"{display}.3psLCCA")
+        default_path = os.path.join(default_dir, f"{display}.3ps")
 
         dest, _ = QFileDialog.getSaveFileName(
-            self, "Export Project", default_path, "3psLCCA Archive (*.3psLCCA)")
+            self, "Export Project", default_path, "3ps Archive (*.3ps)")
         if not dest:
             return
         engine, status = SafeChunkEngine.open(pid)
@@ -1770,7 +1770,7 @@ class HomePage(QWidget):
 
     def _load_shared_project(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load Project", "", "3psLCCA Archive (*.3psLCCA)")
+            self, "Load Project", "", "3ps Archive (*.3ps *.3psLCCA)")
         if not path:
             return
         try:

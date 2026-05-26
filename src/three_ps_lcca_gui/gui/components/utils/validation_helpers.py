@@ -362,22 +362,27 @@ def freeze_form(
         if frozen:
             widget.setToolTip(LOCK_TOOLTIP)
             widget.installEventFilter(_lock_filter)
-            widget.setProperty("_pre_freeze_style", widget.styleSheet())
-            widget.setStyleSheet(widget.styleSheet() + f"; color: {get_token('text_disabled')};")
+            if isinstance(widget, QComboBox):
+                widget.setProperty("frozen", "true")
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
+            else:
+                widget.setProperty("_pre_freeze_style", widget.styleSheet())
+                widget.setStyleSheet(widget.styleSheet() + f"; color: {get_token('text_disabled')};")
         else:
             widget.removeEventFilter(_lock_filter)
             widget.setToolTip("")
-            orig = widget.property("_pre_freeze_style")
-            if orig is not None:
-                widget.setStyleSheet(orig)
+            if isinstance(widget, QComboBox):
+                widget.setProperty("frozen", "")
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
+            else:
+                orig = widget.property("_pre_freeze_style")
+                widget.setStyleSheet(orig if orig is not None else "")
         if isinstance(widget, (QLineEdit, QTextEdit)):
             widget.setReadOnly(frozen)
         elif isinstance(widget, QAbstractSpinBox):
             widget.setReadOnly(frozen)
-        elif isinstance(widget, QComboBox):
-            # Keep enabled so the event filter can intercept clicks;
-            # read-only appearance comes from the filter consuming all input.
-            pass
 
 
 def freeze_widgets(frozen: bool, *widgets) -> None:

@@ -196,4 +196,4 @@ python devtools/launcher.py
 Available tools:
 - **WPI Database**: Manage Wholesale Price Index data.
 - **Catalog Builder**: Rebuild material and section catalogs.
-- **Project Inspector**: Repair and inspect `.3psLCCA` project files.
+- **Project Inspector**: Repair and inspect `.3ps` project files.

@@ -69,6 +69,7 @@ from PySide6.QtWidgets import QButtonGroup, QRadioButton, QGroupBox
 from three_ps_lcca_gui.gui.themes import get_token
 from .widgets.material_dialog import build_excel_snapshot
 import sys
+from ..utils.table_widgets import round_table_viewport
 from ..utils.unit_resolver import (
     get_unit_info as _gui,
     get_known_units as _gku,
@@ -729,6 +730,7 @@ class ImportComponentTable(QTableWidget):
 
     def __init__(self, component_name: str, rows: list[dict], parent=None):
         super().__init__(parent)
+        round_table_viewport(self)
         self.component_name = component_name
         self._rows = rows
 

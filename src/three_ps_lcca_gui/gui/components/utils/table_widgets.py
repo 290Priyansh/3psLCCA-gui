@@ -198,13 +198,13 @@ class BaseActionDelegate(QStyledItemDelegate):
     # ------------------------------------------------------------------
 
     def paint(self, painter, option, index):
-        # Manually paint background to override QSS hover behavior
         painter.save()
         is_alt = self._table.alternatingRowColors() and (index.row() % 2 != 0)
 
         if option.state & QStyle.State_Selected:
-            # Match QSS selection color ($surface_pressed)
             bg = QColor(get_token("surface_pressed"))
+        elif option.state & QStyle.State_MouseOver:
+            bg = QColor(get_token("surface"))
         else:
             role = QPalette.AlternateBase if is_alt else QPalette.Base
             bg = option.palette.color(role)
@@ -262,7 +262,7 @@ class BaseActionDelegate(QStyledItemDelegate):
                         self._set_hovered(index.row(), i)
                         tooltip = btns[i][2] if len(btns[i]) > 2 else ""
                         if tooltip:
-                            QToolTip.showText(event.globalPos(), tooltip, vp)
+                            QToolTip.showText(event.globalPos(), tooltip)
                         else:
                             QToolTip.hideText()
                         return False
@@ -296,6 +296,14 @@ class BaseActionDelegate(QStyledItemDelegate):
 # Tooltip mixin for QTableWidget subclasses
 # ---------------------------------------------------------------------------
 
+def round_table_viewport(table) -> None:
+    """Clip the viewport background to the table's rounded border corners."""
+    table.viewport().setStyleSheet(
+        "border-bottom-left-radius: 7px; border-bottom-right-radius: 7px;"
+        " background-color: transparent;"
+    )
+
+
 class TooltipTableMixin:
     """Mixin for QTableWidget: always shows a tooltip with the full cell text,
     and enables word wrap + ElideNone so text is never silently cut off.
@@ -306,6 +314,7 @@ class TooltipTableMixin:
         super().__init__(*args, **kwargs)
         self.setWordWrap(True)
         self.setTextElideMode(Qt.ElideNone)
+        round_table_viewport(self)
 
     def viewportEvent(self, event):
         if event.type() == QEvent.ToolTip:
@@ -314,7 +323,7 @@ class TooltipTableMixin:
             if index.isValid() and index.column() != action_col:
                 item = self.item(index.row(), index.column())
                 if item and item.text():
-                    QToolTip.showText(event.globalPos(), item.text(), self)
+                    QToolTip.showText(event.globalPos(), item.text())
                     return True
             QToolTip.hideText()
         return super().viewportEvent(event)

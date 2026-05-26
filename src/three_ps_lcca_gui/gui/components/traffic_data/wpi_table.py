@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
 )
-from ..utils.table_widgets import TableDoubleSpinBox, TABLE_SPINBOX_BASE_QSS
+from ..utils.table_widgets import TableDoubleSpinBox, TABLE_SPINBOX_BASE_QSS, round_table_viewport
 
 # ── Vehicles ──────────────────────────────────────────────────────────────────
 
@@ -113,6 +113,7 @@ class _WPITable(QTableWidget):
 
     def __init__(self, parent=None):
         super().__init__(_N_ROWS, _N_COLS, parent)
+        round_table_viewport(self)
         self._editable: bool = False
         self._spinboxes: dict[tuple[int, int], QDoubleSpinBox] = {}
         self._checkboxes: dict[int, QCheckBox] = {}
@@ -280,7 +281,7 @@ class _WPITable(QTableWidget):
             if index.isValid():
                 item = self.item(index.row(), index.column())
                 if item and item.toolTip():
-                    QToolTip.showText(event.globalPos(), item.toolTip(), self)
+                    QToolTip.showText(event.globalPos(), item.toolTip())
                     return True
             QToolTip.hideText()
             return True

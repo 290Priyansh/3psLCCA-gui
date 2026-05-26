@@ -59,7 +59,7 @@ PROJECT_INFO_FIELDS = [
 ]
 
 AGENCY_FIELDS = [
-    Section("Assessing Organization"),
+    Section("Assessing Organisation"),
     FieldDef(
         "contact_person",
         "Assessor's Name",
@@ -68,21 +68,21 @@ AGENCY_FIELDS = [
     ),
     FieldDef(
         "agency_logo",
-        "Organization's Logo",
+        "Organisation's Logo",
         "[Appears on the report cover page. PNG or JPG recommended.]",
         "upload_img",
         options="default",
     ),
     FieldDef(
         "agency_name",
-        "Organization's Name",
+        "Organisation's Name",
         "",
         "text",
         # required=True,
     ),
     FieldDef(
         "agency_address",
-        "Organization's Address",
+        "Address",
         "[Appears in the report footer.]",
         "text",
     ),
@@ -108,22 +108,22 @@ AGENCY_FIELDS = [
 ]
 
 REVIEWER_FIELDS = [
-    Section("Reviewed By"),
+    Section("Reviewer"),
     FieldDef(
         "reviewer_name",
-        "Reviewer Name",
+        "Reviewer's Name",
         "",
         "text",
     ),
     FieldDef(
         "reviewer_organization",
-        "Reviewer Organization",
+        "Reviewer's Organization",
         "",
         "text",
     ),
     FieldDef(
         "reviewer_address",
-        "Reviewer Address",
+        "Address",
         "",
         "text",
     ),
@@ -306,7 +306,7 @@ class GeneralInfo(ScrollableForm):
     def freeze(self, frozen: bool = True):
         freeze_form(GENERAL_FIELDS, self, frozen)
         freeze_img_uploads(self, GENERAL_FIELDS, frozen)
-        freeze_widgets(frozen, self.btn_clear_all)
+        freeze_widgets(frozen, self.btn_clear_all, self.btn_load_profile)
 
     def clear_validation(self):
         clear_field_styles(GENERAL_FIELDS, self)
@@ -315,8 +315,8 @@ class GeneralInfo(ScrollableForm):
         return validate_form(GENERAL_FIELDS, self)
 
     _UNIT_SYSTEM_LABELS = {
-        "metric":   "Metric SI",
-        "imperial": "Imperial (English)",
+        "metric":   "Metric",
+        "imperial": "Imperial",
     }
 
     def load_data_dict(self, data: dict):

@@ -300,7 +300,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         ("Value", _C),  # 5  ┐ Emission group (sub-col → center)
         ("Unit", _C),  # 6  ┘
         ("Total kgCO₂e", _R),  # 7
-        ("Warning", _L),  # 8
+        # ("Warning", _L),  # 8
         ("Action", _C),  # 9
         ("", _C),  # 10 placeholder - reserves space for frozen overlay
     ]
@@ -353,6 +353,10 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         self.horizontalHeader().setSectionResizeMode(placeholder_col, QHeaderView.Fixed)
         self.setColumnWidth(placeholder_col, _ACTION_W)
 
+        # Material column stretches to fill remaining space
+        if is_included:
+            self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+
         # Reserve right margin so scrollable content never enters the overlay zone
         self.setViewportMargins(0, 0, _ACTION_W, 0)
 
@@ -366,7 +370,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         # Initial defaults at ~800px viewport (rest ≈ 720px)
         # Sub-column pairs are equal: qty=43px each, emission=65px each
         if self.is_included:
-            for col, w in enumerate([65, 144, 43, 43, 50, 65, 65, 65, 173, 80]):
+            for col, w in enumerate([75, 164, 60, 60, 70, 85, 85, 114, 80]):
                 self.setColumnWidth(col, w)
         else:
             for col, w in enumerate([72, 158, 43, 43, 50, 65, 65, 216, 80]):
@@ -384,14 +388,13 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
         if self.is_included:
             widths = {
                 0: max(120, int(rest * 0.09)),  # Category
-                1: max(100, int(rest * 0.20)),  # Material
-                2: qty_sub,  # Quantity › Value
-                3: qty_sub,  # Quantity › Unit
+                # col 1 Material is QHeaderView.Stretch — Qt fills remaining width
+                2: qty_sub,                     # Quantity › Value
+                3: qty_sub,                     # Quantity › Unit
                 4: max(120, int(rest * 0.09)),  # Conv. Factor
-                5: em_sub,  # Emission › Value
-                6: em_sub,  # Emission › Unit
-                7: max(70, int(rest * 0.09)),  # Total kgCO₂e
-                8: max(100, int(rest * 0.23)),  # Warning
+                5: em_sub,                      # Emission › Value
+                6: em_sub,                      # Emission › Unit
+                7: max(70, int(rest * 0.09)),   # Total kgCO₂e
             }
         else:
             widths = {
@@ -427,7 +430,7 @@ class CarbonTable(TooltipTableMixin, QTableWidget):
             if index.isValid() and index.column() != action_col:
                 item = self.item(index.row(), index.column())
                 if item and item.text():
-                    QToolTip.showText(event.globalPos(), item.text(), self)
+                    QToolTip.showText(event.globalPos(), item.text())
                     return True
             QToolTip.hideText()
         return super().viewportEvent(event)

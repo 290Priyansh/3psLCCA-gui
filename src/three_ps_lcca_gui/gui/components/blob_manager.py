@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QColor
 from three_ps_lcca_gui.gui.themes import get_token
+from three_ps_lcca_gui.gui.components.utils.table_widgets import round_table_viewport
 
 
 class BlobManagerDialog(QDialog):
@@ -69,6 +70,7 @@ class BlobManagerDialog(QDialog):
 
         # Table
         self.table = QTableWidget()
+        round_table_viewport(self.table)
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["Name", "Size", "Saved At"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)

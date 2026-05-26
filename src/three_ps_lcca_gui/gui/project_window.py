@@ -87,7 +87,7 @@ SIDEBAR_TREE = {
         "Recycling": [],
         "Demolition": [],
     },
-    "Outputs": {},
+    "Results": {},
 }
 
 
@@ -111,7 +111,7 @@ _SIDEBAR_ICONS: dict[str, str] = {
     "Maintenance and Repair": "settings",
     "Recycling":              "autorenew",
     "Demolition":             "delete",
-    "Outputs":                "bar-chart",
+    "Results":                "bar-chart",
 }
 
 
@@ -402,7 +402,7 @@ class ProjectWindow(QMainWindow):
 
         self.menuFile.addSeparator()
 
-        self.actionSave = QAction("Save Now", self)
+        self.actionSave = QAction("Save", self)
         self.actionSave.triggered.connect(self._save_now)
         self.menuFile.addAction(self.actionSave)
 
@@ -412,7 +412,7 @@ class ProjectWindow(QMainWindow):
         action_rename.triggered.connect(self._rename_project)
         self.menuFile.addAction(action_rename)
 
-        action_export = QAction("Export...", self)
+        action_export = QAction("Share", self)
         action_export.triggered.connect(self._export_project)
         self.menuFile.addAction(action_export)
 
@@ -550,7 +550,7 @@ class ProjectWindow(QMainWindow):
         self.outputs_page.compare_requested.connect(self._on_compare_requested)
 
         # Page widgets are built lazily on first sidebar click via _get_or_create_widget
-        self.widget_map = {"Outputs": self.outputs_page}
+        self.widget_map = {"Results": self.outputs_page}
         self._page_names = [
             "General Information", "Bridge Data", "Construction Works Data",
             "Traffic Data", "Financial Data", "Carbon Emissions Data",
@@ -690,7 +690,7 @@ class ProjectWindow(QMainWindow):
                 self.outputs_page.register_pages(self.widget_map)
                 self.content_stack.setCurrentWidget(self.outputs_page)
                 self.outputs_page.run_calculation(save_cache=False)
-                items = self.sidebar.findItems("Outputs", Qt.MatchExactly)
+                items = self.sidebar.findItems("Results", Qt.MatchExactly)
                 if items:
                     self.sidebar.setCurrentItem(items[0])
             else:
@@ -783,7 +783,7 @@ class ProjectWindow(QMainWindow):
         self.outputs_page.register_pages(self.widget_map)
         self.outputs_page.run_validation()
         self.content_stack.setCurrentWidget(self.outputs_page)
-        items = self.sidebar.findItems("Outputs", Qt.MatchExactly)
+        items = self.sidebar.findItems("Results", Qt.MatchExactly)
         if items:
             self.sidebar.setCurrentItem(items[0])
 
@@ -879,10 +879,10 @@ class ProjectWindow(QMainWindow):
 
         # Set default directory to Documents
         default_dir = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation)
-        default_path = os.path.join(default_dir, f"{display}.3psLCCA")
+        default_path = os.path.join(default_dir, f"{display}.3ps")
 
         dest, _ = QFileDialog.getSaveFileName(
-            self, "Export Project", default_path, "3psLCCA Archive (*.3psLCCA)"
+            self, "Export Project", default_path, "3ps Archive (*.3ps)"
         )
         if not dest:
             return

@@ -137,9 +137,9 @@ _SEMANTIC_ROLES: dict[str, list[QPalette.ColorRole]] = {
     "window":          [QPalette.Window],
     "base":            [QPalette.Base, QPalette.Button],
     "surface":         [QPalette.AlternateBase],
-    "surface_mid":     [QPalette.Mid, QPalette.Midlight],
+    "surface_mid":     [QPalette.Mid, QPalette.Midlight, QPalette.ToolTipBase],
     "surface_pressed": [QPalette.Light],
-    "text":            [QPalette.Text, QPalette.WindowText, QPalette.ButtonText],
+    "text":            [QPalette.Text, QPalette.WindowText, QPalette.ButtonText, QPalette.ToolTipText],
     "text_secondary":  [QPalette.PlaceholderText],
     "primary":         [QPalette.Highlight, QPalette.Accent],
 }
