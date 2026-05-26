@@ -17,7 +17,7 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.patches import Patch, FancyBboxPatch
+from matplotlib.patches import Patch
 
 from ..gui.components.outputs.plots_helper.Pie import (
     _build_pillar_data,
@@ -29,7 +29,6 @@ from ..gui.components.outputs.plots_helper.Pie import (
 from ..gui.components.outputs.plots_helper.AggregateChart import (
     _build_stage_data,
     _build_pillar_data as _build_agg_pillar_data,
-    _rounded_bar,
     STAGE_COLORS,
     PILLAR_COLORS,
 )
@@ -271,7 +270,6 @@ def _plot_stage_bars(results: dict, currency: str) -> plt.Figure:
 
     x    = np.arange(len(labels))
     bars = ax.bar(x, values, color=colors, edgecolor="none", width=0.5)
-    fancy = [_rounded_bar(ax, p) for p in bars.patches]
 
     max_v  = max(values) if values else 1.0
     min_v  = min(values) if values else 0.0
@@ -293,7 +291,7 @@ def _plot_stage_bars(results: dict, currency: str) -> plt.Figure:
 
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontweight="bold", color=_TC, fontsize=9)
-    ax.set_ylabel(f"Total Cost (Million {currency})",
+    ax.set_ylabel("Total Cost",
                   fontweight="bold", color=_TC, fontsize=9)
     ax.tick_params(axis="both", colors=_TC, labelsize=8)
     ax.yaxis.grid(True, linestyle="--", alpha=0.3, color=_GC)
@@ -351,10 +349,8 @@ def _plot_pillar_bars(results: dict, currency: str) -> plt.Figure:
         for sign_vals, bottom_arr in ((pos_vals, pos_bottom), (neg_vals, neg_bottom)):
             if not sign_vals.any():
                 continue
-            container = ax.bar(x, sign_vals, bottom=bottom_arr,
-                               color=PILLAR_COLORS[cat], edgecolor="none", width=0.5)
-            for patch in container:
-                _rounded_bar(ax, patch)
+            ax.bar(x, sign_vals, bottom=bottom_arr,
+                   color=PILLAR_COLORS[cat], edgecolor="none", width=0.5)
 
             # Per-segment label: GUI hover shows "stage\ncat: X.XX M\nActual: …"
             for i, (seg_val, bot) in enumerate(zip(sign_vals, bottom_arr)):
@@ -397,7 +393,7 @@ def _plot_pillar_bars(results: dict, currency: str) -> plt.Figure:
 
     ax.set_xticks(x)
     ax.set_xticklabels(stages, fontweight="bold", color=_TC, fontsize=9)
-    ax.set_ylabel(f"Total Cost (Million {currency})",
+    ax.set_ylabel("Total Cost",
                   fontweight="bold", color=_TC, fontsize=9)
     ax.tick_params(axis="both", colors=_TC, labelsize=8)
     ax.yaxis.grid(True, linestyle="--", alpha=0.3, color=_GC)

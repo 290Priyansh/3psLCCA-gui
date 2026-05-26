@@ -1633,7 +1633,7 @@ class HomePage(QWidget):
         menu.addSeparator()
         menu.addAction(
             "Copy Name", lambda: QApplication.clipboard().setText(display))
-        menu.addAction("Share / Export...",
+        menu.addAction("Share",
                        lambda: self._share_project(pid, display))
         menu.addAction("Rename", lambda: self._rename_by_pid(pid, display))
         menu.addAction(

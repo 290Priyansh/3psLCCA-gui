@@ -45,15 +45,19 @@ from three_ps_lcca_gui.gui.theme import (
     FONT_FAMILY,
     FS_XS, FS_SM, FS_BASE, FS_LG, FS_SUBHEAD, FS_XL, FS_MD,
     FW_NORMAL, FW_BOLD,
-    SP1, SP2, SP3, SP4, SP5, SP6, RADIUS_LG, RADIUS_XL,
+    SP1, SP2, SP3, SP4, SP5, SP6, RADIUS_LG, RADIUS_XL, FW_MEDIUM, FW_SEMIBOLD
 )
-from three_ps_lcca_gui.gui.themes import get_token
+from three_ps_lcca_gui.gui.themes import get_token, theme_manager
 from three_ps_lcca_gui.gui.styles import font as _f
 from three_ps_lcca_gui.gui.components.utils.display_format import fmt_currency
 from ..helper_functions.lifecycle_summary import compute_all_summaries
 from ..helper_functions.ratio_helper import format_ratio_string
 from ..helper_functions.lcc_colors import COLORS as LCC_COLORS
-from .AggregateChart import StageBarPlotter, _build_pillar_total_data, _scale, _unit, _divisor
+from .AggregateChart import (
+    StageBarPlotter, SustainabilityBarPlotter, PillarBreakdownBarPlotter,
+    _build_pillar_total_data, _build_pillar_data as _build_pillar_bar_data,
+    _scale, _unit, _divisor,
+)
 
 # ── Register Ubuntu fonts ────────────────────────────────────────────────────
 _UBUNTU_FONT_DIR = os.path.abspath(
@@ -149,7 +153,7 @@ def _build_nested_pie_data(results: dict, currency: str = "INR") -> list:
             ],
         })
     return data
-def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None, leader_radius=1.3):
+def _add_smart_labels(ax, wedges, labels, threshold=None, leader_radius=1.3):
     """
     Anti-overlap elbow labels.
 
@@ -157,6 +161,8 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
     push-apart relaxation pass, then each label is connected back to its slice
     with a two-segment leader:  edge-dot → radial elbow → (adjusted) label column.
     """
+    text_color = get_token("text")
+    line_color = get_token("surface_mid")
     entries = []
     for i, p in enumerate(wedges):
         angle = (p.theta2 + p.theta1) / 2.0
@@ -175,7 +181,7 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
 
     artists = {}  # wedge_index → [matplotlib artists]
 
-    MIN_GAP = 0.22
+    MIN_GAP = 0.32
 
     def _resolve(group):
         group = sorted(group, key=lambda e: -e["y_nat"])
@@ -194,7 +200,7 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
         return group, ys
 
     def _draw(group, ys, ha, x_col):
-        tick = 0.05 if ha == "left" else -0.05
+        tick = 0.08 if ha == "left" else -0.08
         for e, y_lbl in zip(group, ys):
             line, = ax.plot(
                 [e["x0"], e["cx"] * leader_radius, x_col],
@@ -212,22 +218,22 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
             entry_artists = [line, dot]
 
             if value:
-                entry_artists.append(ax.text(x_txt, y_lbl + 0.065, name, ha=ha, va="center",
-                        color=text_color, fontsize=7.5, fontweight="bold",
+                entry_artists.append(ax.text(x_txt, y_lbl + 0.09, name, ha=ha, va="center",
+                        color=text_color, fontsize=9.5, fontweight="bold",
                         clip_on=False, zorder=11))
-                entry_artists.append(ax.text(x_txt, y_lbl - 0.065, value, ha=ha, va="center",
-                        color=text_color, fontsize=6.5, alpha=0.65,
+                entry_artists.append(ax.text(x_txt, y_lbl - 0.09, value, ha=ha, va="center",
+                        color=text_color, fontsize=8.5, alpha=0.65,
                         clip_on=False, zorder=11))
             else:
                 entry_artists.append(ax.text(x_txt, y_lbl, name, ha=ha, va="center",
-                        color=text_color, fontsize=7.5, fontweight="bold",
+                        color=text_color, fontsize=9.5, fontweight="bold",
                         clip_on=False, zorder=11))
 
             artists[e["idx"]] = entry_artists
 
     right = [e for e in entries if e["cx"] >= 0]
     left  = [e for e in entries if e["cx"] <  0]
-    x_col = leader_radius + 0.14
+    x_col = leader_radius + 0.22
 
     if right:
         g, ys = _resolve(right)
@@ -238,8 +244,9 @@ def _add_smart_labels(ax, wedges, labels, text_color, line_color, threshold=None
 
     return artists
 
-def _add_inner_band_labels(ax, wedges, labels, text_color):
+def _add_inner_band_labels(ax, wedges, labels):
     """Stage names rendered inside the inner donut band — no leader lines needed."""
+    text_color = get_token("text")
     for i, p in enumerate(wedges):
         if p.theta2 - p.theta1 <= 5.0:
             continue
@@ -321,7 +328,7 @@ class SimplePillarPlotter:
         self.fig.canvas.draw_idle()
 
     def setup_plot(self):
-        tc, lc = get_token("text"), get_token("surface_mid")
+        tc = get_token("text")
         self.ax.set(aspect="equal")
         if not self.values:
             self.ax.text(0, 0, "No Data", ha="center", va="center", color=tc)
@@ -331,7 +338,7 @@ class SimplePillarPlotter:
         self.wedges, _ = self.ax.pie(self.values, radius=1.05, colors=self.colors, wedgeprops=_WEDGE_SIMP)
 
         display_labels = [f"{l}\n{self._fmt(v)}" for l, v in zip(self.labels, self.values)]
-        self._label_artists = _add_smart_labels(self.ax, self.wedges, display_labels, tc, lc, threshold=15.0, leader_radius=1.25)
+        self._label_artists = _add_smart_labels(self.ax, self.wedges, display_labels, threshold=15.0, leader_radius=1.25)
 
         self._center_text = self.ax.text(0, 0, f"Total\n{self._fmt(self.total)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
 
@@ -497,14 +504,15 @@ class SustainabilityCircularPlotter:
         self.fig.canvas.draw_idle()
 
     def setup_plot(self):
-        tc, sep = get_token("text"), get_token("surface_mid")
+        tc = get_token("text")
+        sep = get_token("surface_mid")
         self.ax.set(aspect="equal")
 
         self.inner_wedges, _ = self.ax.pie(self.inner_vals, radius=self._base_inner_radius, colors=self.inner_colors, wedgeprops=_WEDGE)
         self.outer_wedges, _ = self.ax.pie(self.outer_vals, radius=self._base_outer_radius, colors=self.outer_colors, wedgeprops=_WEDGE)
 
         outer_disp = [f"{l.split(' - ')[1]}\n{self._fmt(v)}" for l, v in zip(self.outer_labels, self.outer_vals)]
-        self._label_artists = _add_smart_labels(self.ax, self.outer_wedges, outer_disp, tc, sep, threshold=15.0, leader_radius=1.45)
+        self._label_artists = _add_smart_labels(self.ax, self.outer_wedges, outer_disp, threshold=15.0, leader_radius=1.45)
 
         if self.total_value > 0:
             angles = np.cumsum(self.inner_vals) / self.total_value * 2 * np.pi
@@ -515,8 +523,8 @@ class SustainabilityCircularPlotter:
 
         self._center_text = self.ax.text(0, 0, f"Total\n{self._fmt(self.total_value)}", ha="center", va="center", fontsize=10, fontweight="bold", color=tc)
 
-        legend_els = [Patch(facecolor=COLORS["stages"].get(l, "#AAA"), label=l) for l in self.inner_labels]
-        legend_els += [Patch(facecolor=c, label=l) for l, c in COLORS["pillars"].items()]
+        legend_els = [Patch(facecolor=c, label=l) for l, c in COLORS["pillars"].items()]
+        legend_els += [Patch(facecolor=COLORS["stages"].get(l, "#AAA"), label=l) for l in self.inner_labels]
         self.ax.legend(handles=legend_els, loc="upper center", bbox_to_anchor=(0.5, -0.05), ncol=3, frameon=False, fontsize=8, labelcolor=tc)
 
         self.ax.axis("off")
@@ -582,45 +590,56 @@ class LCCPieWidget(QWidget):
         c_eco, c_env, c_soc = get_token("eco"), get_token("env"), get_token("soc")
         _pillar_ok, _nested_ok = _pillar_totals_ok(self._results), _nested_data_ok(self._results)
 
-        ratio = format_ratio_string([pt.get("eco", 0), pt.get("env", 0), pt.get("social", 0)], [c_eco, c_env, c_soc], get_token("text"), get_token("text_secondary"))
+        # Calculate percentages and formatted amounts
+        v_eco, v_env, v_soc = pt.get("eco", 0), pt.get("env", 0), pt.get("social", 0)
+        sum_pt = sum([v_eco, v_env, v_soc]) or 1.0
+        p_eco, p_env, p_soc = v_eco / sum_pt * 100, v_env / sum_pt * 100, v_soc / sum_pt * 100
+        
+        a_eco = fmt_currency(v_eco, self._currency, decimals=0, style="short", use_short_suffix=True).title()
+        a_env = fmt_currency(v_env, self._currency, decimals=0, style="short", use_short_suffix=True).title()
+        a_soc = fmt_currency(v_soc, self._currency, decimals=0, style="short", use_short_suffix=True).title()
 
         ratio_box = QFrame()
-        ratio_box.setStyleSheet(f"background: transparent; border: 1px solid {get_token('surface_mid')}; border-radius: {RADIUS_LG}px;")
+        ratio_box.setStyleSheet(
+            f"background-color: {get_token('surface_mid')}; "
+            f"border: 1px solid {get_token('surface_mid')}; "
+            f"border-radius: {RADIUS_LG}px;"
+        )
         ratio_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         rb_v = QVBoxLayout(ratio_box)
         rb_v.setContentsMargins(SP4, SP4, SP4, SP4)
         rb_v.setSpacing(SP2)
 
-        rb_label = QLabel(f"<span style='color:{c_eco}'>ECONOMIC</span> <span style='color:{get_token('text')}'>:</span> <span style='color:{c_env}'>ENVIRONMENTAL</span> <span style='color:{get_token('text')}'>:</span> <span style='color:{c_soc}'>SOCIAL</span>")
+        rb_label = QLabel(f"<span style='color:{c_eco}'>Economic</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_env}'>Environmental</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_soc}'>Social</span>")
         rb_label.setAlignment(Qt.AlignCenter)
         rb_label.setWordWrap(True)
         rb_label.setTextFormat(Qt.RichText)
-        rb_label.setFont(_f(FS_SM, FW_BOLD))
-        rb_label.setStyleSheet(f"color: {get_token('text')}; letter-spacing: 1.2px; border: none;")
+        rb_label.setFont(_f(FS_MD, FW_BOLD))
+        rb_label.setStyleSheet(f"color: {get_token('text')}; letter-spacing: 1.2px; border: none; background: transparent;")
         rb_v.addWidget(rb_label)
 
-        rb_val = QLabel(ratio)
-        rb_val.setAlignment(Qt.AlignCenter)
-        rb_val.setWordWrap(True)
-        rb_val.setTextFormat(Qt.RichText)
-        rb_val.setFont(QFont("Consolas", FS_LG))
-        rb_val.setStyleSheet(f"color: {get_token('text')}; border: none;")
-        rb_v.addWidget(rb_val)
+        rb_pct = QLabel(f"<span style='color:{c_eco}'>{p_eco:.1f}%</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_env}'>{p_env:.1f}%</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_soc}'>{p_soc:.1f}%</span>")
+        rb_pct.setAlignment(Qt.AlignCenter)
+        rb_pct.setTextFormat(Qt.RichText)
+        rb_pct.setFont(QFont("Consolas", FS_MD, FW_BOLD))
+        rb_pct.setStyleSheet(f"border: none; background: transparent;")
+        rb_v.addWidget(rb_pct)
 
-        rb_note = QLabel("(expressed as ratio)")
-        rb_note.setAlignment(Qt.AlignCenter)
-        rb_note.setFont(_f(FS_XS, FW_NORMAL, italic=True))
-        rb_note.setStyleSheet(f"color: {get_token('text')}; border: none;")
-        rb_v.addWidget(rb_note)
+        rb_amt = QLabel(f"<span style='color:{c_eco}'>{a_eco}</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_env}'>{a_env}</span> <span style='color:{get_token('text_disabled')}'>:</span> <span style='color:{c_soc}'>{a_soc}</span>")
+        rb_amt.setAlignment(Qt.AlignCenter)
+        rb_amt.setTextFormat(Qt.RichText)
+        rb_amt.setFont(_f(FS_MD, FW_BOLD))
+        rb_amt.setStyleSheet(f"border: none; background: transparent; color: {get_token('text_secondary')};")
+        rb_v.addWidget(rb_amt)
         left_v.addWidget(ratio_box)
 
-        self._mode_cb = QCheckBox("Show Percentage Mode")
-        self._mode_cb.setFont(_f(FS_BASE))
-        self._mode_cb.setStyleSheet(f"color: {get_token('text_secondary')}; background: transparent; border: none;")
-        self._mode_cb.setVisible(_pillar_ok)
-        left_v.addWidget(self._mode_cb, 0, Qt.AlignCenter)
+        # self._mode_cb = QCheckBox("Show Percentage Mode")
+        # self._mode_cb.setFont(_f(FS_BASE))
+        # self._mode_cb.setStyleSheet(f"color: {get_token('text_secondary')}; background: transparent; border: none;")
+        # self._mode_cb.setVisible(_pillar_ok)
+        # left_v.addWidget(self._mode_cb, 0, Qt.AlignCenter)
 
-        self._stage_cb = QCheckBox("See stage wise")
+        self._stage_cb = QCheckBox("Include stage-wise break-up")
         self._stage_cb.setFont(_f(FS_BASE))
         self._stage_cb.setStyleSheet(f"color: {get_token('text_secondary')}; background: transparent; border: none;")
         self._stage_cb.setVisible(_pillar_ok)
@@ -690,9 +709,56 @@ class LCCPieWidget(QWidget):
                     self._toolbar_stack.addWidget(_ChartToolbar(c1, self))
                     self._plotters.append(p1)
 
-            self._mode_cb.toggled.connect(self._on_mode_change)
-            self._stage_cb.toggled.connect(lambda c: self._chart_stack.setCurrentIndex(1 if c else 0))
-            self._stage_cb.toggled.connect(lambda c: self._toolbar_stack.setCurrentIndex(1 if c else 0))
+            # Pillar totals bar chart (bar + no stage)
+            pillar_bar_data = _build_pillar_total_data(self._results)
+            self._bar_chart_idx = -1
+            if pillar_bar_data:
+                p_bar = StageBarPlotter(pillar_bar_data, currency=self._currency)
+                c_bar = FigureCanvasQTAgg(p_bar.setup_plot())
+                c_bar.setMinimumHeight(400); c_bar.setMaximumHeight(500)
+                c_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                c_bar.setStyleSheet("background: transparent; border: none;")
+                c_bar.installEventFilter(scroller)
+                self._bar_chart_idx = self._chart_stack.count()
+                self._chart_stack.addWidget(c_bar)
+                self._toolbar_stack.addWidget(_ChartToolbar(c_bar, self))
+
+            # Pillar-x breakdown bar chart (bar + stage): Eco/Env/Soc on x, stacked by stage
+            stage_bar_data = _build_pillar_bar_data(self._results)
+            self._stage_bar_chart_idx = -1
+            if stage_bar_data:
+                p_sbar = PillarBreakdownBarPlotter(stage_bar_data, currency=self._currency)
+                c_sbar = FigureCanvasQTAgg(p_sbar.setup_plot())
+                c_sbar.setMinimumHeight(400); c_sbar.setMaximumHeight(500)
+                c_sbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+                c_sbar.setStyleSheet("background: transparent; border: none;")
+                c_sbar.installEventFilter(scroller)
+                self._stage_bar_chart_idx = self._chart_stack.count()
+                self._chart_stack.addWidget(c_sbar)
+                self._toolbar_stack.addWidget(_ChartToolbar(c_sbar, self))
+
+            self._bar_cb = QCheckBox("Change to bar chart")
+            self._bar_cb.setFont(_f(FS_BASE))
+            self._bar_cb.setStyleSheet(f"color: {get_token('text_secondary')}; background: transparent; border: none;")
+            self._bar_cb.setVisible(self._bar_chart_idx >= 0)
+            left_v.addWidget(self._bar_cb, 0, Qt.AlignCenter)
+
+            def _switch_chart():
+                bar   = self._bar_cb.isChecked()
+                stage = self._stage_cb.isChecked()
+                if bar and stage and self._stage_bar_chart_idx >= 0:
+                    idx = self._stage_bar_chart_idx   # stacked pillar bar per stage
+                elif bar and self._bar_chart_idx >= 0:
+                    idx = self._bar_chart_idx          # simple pillar totals bar
+                elif stage and _nested_ok:
+                    idx = 1                            # nested donut
+                else:
+                    idx = 0                            # simple pillar donut
+                self._chart_stack.setCurrentIndex(idx)
+                self._toolbar_stack.setCurrentIndex(idx)
+
+            self._stage_cb.toggled.connect(lambda _: _switch_chart())
+            self._bar_cb.toggled.connect(lambda _: _switch_chart())
 
             chart_cont = QWidget()
             chart_cont.setStyleSheet("background: transparent; border: none;")

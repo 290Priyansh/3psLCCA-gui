@@ -17,12 +17,14 @@ _INDIA_UNITS = [
 
 _WESTERN_UNITS = [
     #  threshold       divisor            full        short
+    (100_000_000_000, 1_000_000_000_000, "trillion", "T"),
     (100_000_000,  1_000_000_000,  "billion",   "B"),  # trigger at 0.1 B
     (100_000,      1_000_000,      "million",   "M"),  # trigger at 0.1 M
     (1_000,        1_000,          "thousand",  "K"),  # 10^3
 ]
 
 _UNIT_DIVISORS = {name: div for _, div, name, _ in _INDIA_UNITS + _WESTERN_UNITS}
+_UNIT_DIVISORS.update({short.lower(): div for _, div, _, short in _INDIA_UNITS + _WESTERN_UNITS})
 
 # ── Private helpers ───────────────────────────────────────────────────────────
 
@@ -34,15 +36,17 @@ def _to_float(val):
         return None, str(val)
 
 
-def _fmt_suffix(n: float, units: list) -> str:
+def _fmt_suffix(n: float, units: list, use_short: bool = False) -> str:
     """Divide n by the first matching threshold and return 'value suffix'."""
     sign = "-" if n < 0 else ""
     abs_n = abs(n)
-    for threshold, divisor, suffix, _ in units:
+    for threshold, divisor, full_suffix, short_suffix in units:
         if abs_n >= threshold:
             value = round(abs_n / divisor, 2)
             value = int(value) if float(value).is_integer() else value
-            return f"{sign}{value} {suffix}"
+            suffix = short_suffix if use_short else full_suffix
+            sep = "" if use_short else " "
+            return f"{sign}{value}{sep}{suffix}"
     return f"{sign}{abs_n:g}" if abs_n else "0"
 
 
@@ -63,6 +67,15 @@ def _fmt_inr_comma(v: float, d: int) -> str:
 
 # ── Public formatters ─────────────────────────────────────────────────────────
 
+def get_scaled_value(n, unit: str) -> float:
+    """Returns the numeric value scaled to the requested unit (e.g. 'crore', 'M', 'L')."""
+    f, err = _to_float(n)
+    if err is not None:
+        return 0.0
+    divisor = _UNIT_DIVISORS.get(unit.lower(), 1)
+    return f / divisor
+
+
 def fmt(val) -> str:
     """Plain decimal.  1234.5 → '1234.50'"""
     f, err = _to_float(val)
@@ -81,16 +94,16 @@ def fmt_pct(val) -> str:
     return f"{f:.1f}" if err is None else err
 
 
-def fmt_short_india(n) -> str:
+def fmt_short_india(n, use_short_suffix=False) -> str:
     """India suffix mode.  1_00_00_000 → '1 crore',  50_00_000 → '50 lakh'"""
     f, err = _to_float(n)
-    return _fmt_suffix(f, _INDIA_UNITS) if err is None else err
+    return _fmt_suffix(f, _INDIA_UNITS, use_short=use_short_suffix) if err is None else err
 
 
-def fmt_short(n) -> str:
+def fmt_short(n, use_short_suffix=False) -> str:
     """Western suffix mode.  1_000_000 → '1 million',  500_000 → '500 thousand'"""
     f, err = _to_float(n)
-    return _fmt_suffix(f, _WESTERN_UNITS) if err is None else err
+    return _fmt_suffix(f, _WESTERN_UNITS, use_short=use_short_suffix) if err is None else err
 
 
 def fmt_unit(n, unit: str) -> str:
@@ -105,7 +118,7 @@ def fmt_unit(n, unit: str) -> str:
     return f"{sign}{value} {unit}"
 
 
-def fmt_currency(val, currency="INR", decimals=None, style="comma") -> str:
+def fmt_currency(val, currency="INR", decimals=None, style="comma", use_short_suffix=False) -> str:
     """Format a value as currency.
 
     style  "comma"  → grouped digits only    '12,34,567.00'
@@ -123,10 +136,10 @@ def fmt_currency(val, currency="INR", decimals=None, style="comma") -> str:
     SKIP_ME = True
     if currency == "INR" and not SKIP_ME:
         comma_str = sign + _fmt_inr_comma(abs_v, d)
-        short_str = fmt_short_india(f)
+        short_str = fmt_short_india(f, use_short_suffix=use_short_suffix)
     else:
         comma_str = f"{sign}{abs_v:,.{d}f}"
-        short_str = fmt_short(f)
+        short_str = fmt_short(f, use_short_suffix=use_short_suffix)
 
     if style == "comma":
         return comma_str
