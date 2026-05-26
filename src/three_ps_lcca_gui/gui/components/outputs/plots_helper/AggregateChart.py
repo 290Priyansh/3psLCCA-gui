@@ -9,6 +9,7 @@ Two-view bar chart widget:
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
@@ -101,14 +102,8 @@ class WheelForwarder(QObject):
 # DATA HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _divisor(currency: str) -> int:
-    return 1_00_00_000 if currency == "INR" else 1_000_000
-
-def _scale(x: float, currency: str) -> float:
-    return float(x) / _divisor(currency)
-
-def _unit(currency: str) -> str:
-    return "Crore" if currency == "INR" else "Million"
+def _currency_note(currency: str) -> str:
+    return f"All values in {currency}"
 
 
 def _build_stage_data(results: dict) -> list:
@@ -208,6 +203,13 @@ class _BasePlotter:
         self.ax.yaxis.grid(True, linestyle="--", alpha=0.3, color=gc)
         self.ax.set_axisbelow(True)
 
+    def _setup_y_formatter(self):
+        self.ax.yaxis.set_major_formatter(
+            matplotlib.ticker.FuncFormatter(
+                lambda v, _: fmt_currency(v, self.currency, decimals=0, style="short")
+            )
+        )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CHART 0 – Stage-wise bars  (default)
@@ -218,7 +220,7 @@ class StageBarPlotter(_BasePlotter):
         super().__init__(currency)
         self.labels     = [d[0] for d in data]
         self.raw_values = [d[1] for d in data]
-        self.values     = [_scale(v, currency) for v in self.raw_values]
+        self.values     = [float(v) for v in self.raw_values]
         self.colors     = [d[2] for d in data]
         self._patches: list = []
 
@@ -230,8 +232,7 @@ class StageBarPlotter(_BasePlotter):
             if p is not None and p.contains(event)[0]:
                 self.annot.set_text(
                     f"{self.labels[i]}\n"
-                    f"{self.values[i]:.2f} {_unit(self.currency)}\n"
-                    f"Actual: {self.currency} {fmt_currency(self.raw_values[i], self.currency, decimals=0, style='short')}"
+                    f"{fmt_currency(self.raw_values[i], self.currency, decimals=0, style='short')}"
                 )
                 self.annot.xy = (event.xdata, event.ydata)
                 self.annot.set_visible(True)
@@ -264,6 +265,7 @@ class StageBarPlotter(_BasePlotter):
                     ha="center", va="top", fontsize=8, fontweight="bold", color=tc)
 
         self._setup_axes_style(tc, gc, x, self.labels, "Total Cost")
+        self._setup_y_formatter()
         if self.values:
             self.ax.set_ylim(min(0, min_v) - pad, max(0, max_v) + pad)
 
@@ -273,6 +275,9 @@ class StageBarPlotter(_BasePlotter):
             [Patch(facecolor=c, label=l) for l, c in zip(self.labels, self.colors)],
             "Lifecycle Stages", tc,
         )
+        self.fig.text(0.98, 0.97, _currency_note(self.currency),
+                      ha="right", va="top", fontsize=8,
+                      color=get_token("text"), alpha=0.85)
         return self.fig
 
 
@@ -291,7 +296,7 @@ class SustainabilityBarPlotter(_BasePlotter):
             for cat in self.categories
         }
         self.values = {
-            cat: [_scale(v, currency) for v in self.raw_values[cat]]
+            cat: [float(v) for v in self.raw_values[cat]]
             for cat in self.categories
         }
 
@@ -308,11 +313,9 @@ class SustainabilityBarPlotter(_BasePlotter):
                         stage_idx = int(round(x_pos / 0.75))
                         if 0 <= stage_idx < len(self.stages):
                             raw = self.raw_values[cat][stage_idx]
-                            val = self.values[cat][stage_idx]
                             self.annot.set_text(
                                 f"{self.stages[stage_idx]}\n"
-                                f"{cat}: {val:.2f} {_unit(self.currency)}\n"
-                                f"Actual: {self.currency} {fmt_currency(raw, self.currency, decimals=0, style='short')}"
+                                f"{cat}: {fmt_currency(raw, self.currency, decimals=0, style='short')}"
                             )
                             self.annot.xy = (event.xdata, event.ydata)
                             self.annot.set_visible(True)
@@ -327,7 +330,6 @@ class SustainabilityBarPlotter(_BasePlotter):
     def setup_plot(self):
         tc  = get_token("text")
         gc  = get_token("surface_mid")
-        div = _divisor(self.currency)
         x          = np.arange(len(self.stages)) * 0.75
         pos_bottom = np.zeros(len(self.stages))
         neg_bottom = np.zeros(len(self.stages))
@@ -358,7 +360,7 @@ class SustainabilityBarPlotter(_BasePlotter):
                         if v >= min_label_h:
                             self.ax.text(
                                 x[i], b + v / 2,
-                                f"{cat}\n{fmt_currency(v * div, self.currency, decimals=0, style='short')}",
+                                f"{cat}\n{fmt_currency(v, self.currency, decimals=0, style='short')}",
                                 ha="center", va="center", fontsize=7, fontweight="bold",
                                 color="white", clip_on=True, linespacing=1.3,
                             )
@@ -372,7 +374,7 @@ class SustainabilityBarPlotter(_BasePlotter):
                         if abs(v) >= min_label_h:
                             self.ax.text(
                                 x[i], b + v / 2,
-                                f"{cat}\n{fmt_currency(v * div, self.currency, decimals=0, style='short')}",
+                                f"{cat}\n{fmt_currency(v, self.currency, decimals=0, style='short')}",
                                 ha="center", va="center", fontsize=7, fontweight="bold",
                                 color="white", clip_on=True, linespacing=1.3,
                             )
@@ -387,23 +389,24 @@ class SustainabilityBarPlotter(_BasePlotter):
                 if env_v > 0:
                     # Env label in green just above bar top
                     self.ax.text(x[i], pos_bottom[i] + pad * 0.06,
-                        f"Env: {fmt_currency(env_v * div, self.currency, decimals=0, style='short')}",
+                        f"Env: {fmt_currency(env_v, self.currency, decimals=0, style='short')}",
                         ha="center", va="bottom", fontsize=7.5, fontweight="bold",
                         color=env_color, clip_on=False)
                     # Total with clear breathing room above env label
                     self.ax.text(x[i], pos_bottom[i] + pad * 0.28,
-                        fmt_currency(pos_bottom[i] * div, self.currency, decimals=0, style="short"),
+                        fmt_currency(pos_bottom[i], self.currency, decimals=0, style="short"),
                         ha="center", va="bottom", fontsize=8, fontweight="bold", color=tc)
                 else:
                     self.ax.text(x[i], pos_bottom[i] + pad * 0.12,
-                        fmt_currency(pos_bottom[i] * div, self.currency, decimals=0, style="short"),
+                        fmt_currency(pos_bottom[i], self.currency, decimals=0, style="short"),
                         ha="center", va="bottom", fontsize=8, fontweight="bold", color=tc)
             if neg_bottom[i] < 0:
                 self.ax.text(x[i], neg_bottom[i] - pad * 0.12,
-                    fmt_currency(neg_bottom[i] * div, self.currency, decimals=0, style="short"),
+                    fmt_currency(neg_bottom[i], self.currency, decimals=0, style="short"),
                     ha="center", va="top", fontsize=8, fontweight="bold", color=tc)
 
         self._setup_axes_style(tc, gc, x, self.stages, "Total Cost")
+        self._setup_y_formatter()
         self.ax.set_ylim(min(0, y_min) - pad * 0.3, max(0, y_max) + pad)
 
         self._setup_spines(tc)
@@ -412,6 +415,9 @@ class SustainabilityBarPlotter(_BasePlotter):
             [Patch(facecolor=PILLAR_COLORS[cat], label=cat) for cat in self.categories],
             "Sustainability Pillars", tc,
         )
+        self.fig.text(0.98, 0.97, _currency_note(self.currency),
+                      ha="right", va="top", fontsize=8,
+                      color=get_token("text"), alpha=0.85)
         return self.fig
 
 
@@ -437,22 +443,17 @@ class PillarBreakdownBarPlotter(_BasePlotter):
         for d in data:
             for name, raw_val in d["pillars"]:
                 self.raw_values[name][d["stage"]] = raw_val
-        self.scaled_values = {
-            cat: {st: _scale(v, currency) for st, v in self.raw_values[cat].items()}
-            for cat in self.categories
-        }
 
     def setup_plot(self):
         tc  = get_token("text")
         gc  = get_token("surface_mid")
-        div = _divisor(self.currency)
         x   = np.arange(len(self.categories)) * 0.75
 
         pos_bottom = np.zeros(len(self.categories))
         neg_bottom = np.zeros(len(self.categories))
 
         total_pos_per_cat = [
-            sum(max(0.0, self.scaled_values[cat].get(st, 0)) for st in self.stages)
+            sum(max(0.0, self.raw_values[cat].get(st, 0)) for st in self.stages)
             for cat in self.categories
         ]
         est_range   = max(total_pos_per_cat) if total_pos_per_cat else 1.0
@@ -465,7 +466,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
         for stage in self.stages:
             color      = STAGE_COLORS.get(stage, "#AAAAAA")
             lc         = _lbl_color(color)
-            stage_vals = np.array([self.scaled_values[cat].get(stage, 0.0) for cat in self.categories])
+            stage_vals = np.array([self.raw_values[cat].get(stage, 0.0) for cat in self.categories])
             pos_vals   = np.where(stage_vals > 0, stage_vals, 0.0)
             neg_vals   = np.where(stage_vals < 0, stage_vals, 0.0)
 
@@ -477,7 +478,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
                     if v >= min_label_h:
                         self.ax.text(
                             x[i], b + v / 2,
-                            f"{stage}\n{fmt_currency(v * div, self.currency, decimals=0, style='short')}",
+                            f"{stage}\n{fmt_currency(v, self.currency, decimals=0, style='short')}",
                             ha="center", va="center", fontsize=7, fontweight="bold",
                             color=lc, clip_on=True, linespacing=1.3,
                         )
@@ -485,7 +486,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
                     elif v > 0:
                         missed[i].append((
                             stage,
-                            fmt_currency(v * div, self.currency, decimals=0, style="short"),
+                            fmt_currency(v, self.currency, decimals=0, style="short"),
                             color,
                         ))
             if neg_vals.any():
@@ -496,7 +497,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
                     if abs(v) >= min_label_h:
                         self.ax.text(
                             x[i], b + v / 2,
-                            f"{stage}\n{fmt_currency(v * div, self.currency, decimals=0, style='short')}",
+                            f"{stage}\n{fmt_currency(v, self.currency, decimals=0, style='short')}",
                             ha="center", va="center", fontsize=7, fontweight="bold",
                             color=lc, clip_on=True, linespacing=1.3,
                         )
@@ -504,7 +505,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
                     elif v < 0:
                         missed[i].append((
                             stage,
-                            fmt_currency(v * div, self.currency, decimals=0, style="short"),
+                            fmt_currency(v, self.currency, decimals=0, style="short"),
                             color,
                         ))
 
@@ -515,11 +516,11 @@ class PillarBreakdownBarPlotter(_BasePlotter):
         for i in range(len(self.categories)):
             if pos_bottom[i] > 0:
                 self.ax.text(x[i], pos_bottom[i] + pad * 0.18,
-                    fmt_currency(pos_bottom[i] * div, self.currency, decimals=0, style="short"),
+                    fmt_currency(pos_bottom[i], self.currency, decimals=0, style="short"),
                     ha="center", va="bottom", fontsize=8, fontweight="bold", color=tc)
             if neg_bottom[i] < 0:
                 self.ax.text(x[i], neg_bottom[i] - pad * 0.18,
-                    fmt_currency(neg_bottom[i] * div, self.currency, decimals=0, style="short"),
+                    fmt_currency(neg_bottom[i], self.currency, decimals=0, style="short"),
                     ha="center", va="top", fontsize=8, fontweight="bold", color=tc)
 
         # Callout boxes only when the bar had zero inside labels (all segments were tiny)
@@ -542,6 +543,7 @@ class PillarBreakdownBarPlotter(_BasePlotter):
             )
 
         self._setup_axes_style(tc, gc, x, self.categories, "Total Cost")
+        self._setup_y_formatter()
         self.ax.set_ylim(min(0, y_min) - pad, max(0, y_max) + pad)
         self._setup_spines(tc)
         self._setup_annotation(tc)
@@ -549,6 +551,9 @@ class PillarBreakdownBarPlotter(_BasePlotter):
             [Patch(facecolor=STAGE_COLORS.get(st, "#AAAAAA"), label=st) for st in self.stages],
             "Lifecycle Stages", tc,
         )
+        self.fig.text(0.98, 0.97, _currency_note(self.currency),
+                      ha="right", va="top", fontsize=8,
+                      color=get_token("text"), alpha=0.85)
         return self.fig
 
 

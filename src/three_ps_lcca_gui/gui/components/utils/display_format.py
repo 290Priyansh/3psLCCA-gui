@@ -10,9 +10,10 @@ DECIMAL_PLACES: int = 2
 # ── Unit tables ───────────────────────────────────────────────────────────────
 
 _INDIA_UNITS = [
-    #  threshold       divisor        full      short
-    (1_00_00_000,  1_00_00_000,   "crore",  "Cr"),  # 10^7
-    (1_00_000,     1_00_000,      "lakh",   "L"),   # 10^5
+    #  threshold       divisor        full        short
+    (1_00_00_000,  1_00_00_000,   "crore",    "Cr"),  # 10^7
+    (1_00_000,     1_00_000,      "lakh",     "L"),   # 10^5
+    (1_000,        1_000,         "thousand", "K"),   # 10^3
 ]
 
 _WESTERN_UNITS = [
@@ -133,7 +134,7 @@ def fmt_currency(val, currency="INR", decimals=None, style="comma", use_short_su
     sign = "-" if f < 0 else ""
     abs_v = abs(f)
 
-    SKIP_ME = True
+    SKIP_ME = False
     if currency == "INR" and not SKIP_ME:
         comma_str = sign + _fmt_inr_comma(abs_v, d)
         short_str = fmt_short_india(f, use_short_suffix=use_short_suffix)

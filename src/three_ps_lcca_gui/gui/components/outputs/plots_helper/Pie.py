@@ -56,7 +56,7 @@ from ..helper_functions.lcc_colors import COLORS as LCC_COLORS
 from .AggregateChart import (
     StageBarPlotter, SustainabilityBarPlotter, PillarBreakdownBarPlotter,
     _build_pillar_total_data, _build_pillar_data as _build_pillar_bar_data,
-    _scale, _unit, _divisor,
+    _currency_note,
 )
 
 # ── Register Ubuntu fonts ────────────────────────────────────────────────────
@@ -128,16 +128,16 @@ def _nested_data_ok(results: dict) -> bool:
     pw = compute_all_summaries(results).get("pillar_wise", {})
     return all(v >= 0 for stage in pw.values() for v in stage.values())
 
-def _build_pillar_data(results: dict, currency: str = "INR"):
+def _build_pillar_data(results: dict):
     pt = compute_all_summaries(results).get("pillar_totals", {})
     rows = [
         ("Economic",      pt.get("eco",    0), COLORS["pillars"]["Economic"]),
         ("Environmental", pt.get("env",    0), COLORS["pillars"]["Environmental"]),
         ("Social",        pt.get("social", 0), COLORS["pillars"]["Social"]),
     ]
-    return [(l, _scale(v, currency), c) for l, v, c in rows if v > 0]
+    return [(l, float(v), c) for l, v, c in rows if v > 0]
 
-def _build_nested_pie_data(results: dict, currency: str = "INR") -> list:
+def _build_nested_pie_data(results: dict) -> list:
     pw = compute_all_summaries(results).get("pillar_wise", {})
     mapping = [("initial", "Initial"), ("use", "Use"), ("end_of_life", "End-of-Life")]
     data = []
@@ -147,9 +147,9 @@ def _build_nested_pie_data(results: dict, currency: str = "INR") -> list:
         data.append({
             "stage": label,
             "pillars": [
-                ("Economic",      _scale(p.get("eco",    0), currency), COLORS["pillars"]["Economic"]),
-                ("Environmental", _scale(p.get("env",    0), currency), COLORS["pillars"]["Environmental"]),
-                ("Social",        _scale(p.get("social", 0), currency), COLORS["pillars"]["Social"]),
+                ("Economic",      float(p.get("eco",    0)), COLORS["pillars"]["Economic"]),
+                ("Environmental", float(p.get("env",    0)), COLORS["pillars"]["Environmental"]),
+                ("Social",        float(p.get("social", 0)), COLORS["pillars"]["Social"]),
             ],
         })
     return data
@@ -267,7 +267,7 @@ def _add_inner_band_labels(ax, wedges, labels):
 
 class SimplePillarPlotter:
     def __init__(self, results: dict, currency: str = "INR"):
-        items = _build_pillar_data(results, currency)
+        items = _build_pillar_data(results)
         self.labels, self.values, self.colors = [i[0] for i in items], [i[1] for i in items], [i[2] for i in items]
         self.total, self.currency, self.mode = sum(self.values), currency, "Value"
         self._center_text  = None
@@ -282,7 +282,7 @@ class SimplePillarPlotter:
 
     def _fmt(self, val: float) -> str:
         if self.mode == "Percentage": return f"{val / (self.total or 1) * 100:.1f}%"
-        return fmt_currency(val * _divisor(self.currency), self.currency, decimals=0, style="short")
+        return fmt_currency(val, self.currency, decimals=0, style="short")
 
     def _hover(self, event):
         if not hasattr(self, "wedges") or not self.wedges:
@@ -348,6 +348,9 @@ class SimplePillarPlotter:
         self.ax.axis("off")
         self.ax.set_xlim(-1.85, 1.85)
         self.ax.set_ylim(-1.85, 1.85)
+        self.fig.text(0.98, 0.97, _currency_note(self.currency),
+                      ha="right", va="top", fontsize=8,
+                      color=get_token("text"), alpha=0.85)
         return self.fig
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -385,7 +388,7 @@ class SustainabilityCircularPlotter:
 
     def _fmt(self, val: float) -> str:
         if self.mode == "Percentage": return f"{val / (self.total_value or 1) * 100:.1f}%"
-        return fmt_currency(val * _divisor(self.currency), self.currency, decimals=0, style="short")
+        return fmt_currency(val, self.currency, decimals=0, style="short")
 
     def _hover(self, event):
         if not hasattr(self, "outer_wedges") or not self.outer_wedges:
@@ -530,6 +533,9 @@ class SustainabilityCircularPlotter:
         self.ax.axis("off")
         self.ax.set_xlim(-2.1, 2.1)
         self.ax.set_ylim(-2.1, 2.1)
+        self.fig.text(0.98, 0.97, _currency_note(self.currency),
+                      ha="right", va="top", fontsize=8,
+                      color=get_token("text"), alpha=0.85)
         return self.fig
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -697,7 +703,7 @@ class LCCPieWidget(QWidget):
             self._plotters.append(p0)
 
             if _nested_ok:
-                data1 = _build_nested_pie_data(self._results, self._currency)
+                data1 = _build_nested_pie_data(self._results)
                 if data1:
                     p1 = SustainabilityCircularPlotter(data1, currency=self._currency)
                     c1 = FigureCanvasQTAgg(p1.setup_plot())
